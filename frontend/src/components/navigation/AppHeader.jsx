@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom'
 import BrandLockup from './BrandLockup'
 import NavIcon from './NavIcon'
+import WorkspaceFinder from './WorkspaceFinder'
 import OrganizationSwitcher from './OrganizationSwitcher'
 
 function userLabel(user) {
   return user?.display_name || user?.username || user?.email || 'Account'
 }
 
-export default function AppHeader({ title, user, organizations, organizationId, onOrganizationChange, onMenuOpen, menuOpen, menuButtonRef, onLogout, logoutBusy, logoutError }) {
+export default function AppHeader({ access, title, user, organizations, organizationId, onOrganizationChange, onMenuOpen, menuOpen, menuButtonRef, onLogout, logoutBusy, logoutError }) {
   return <header className='app-header'>
     <div className='app-header-leading'>
       <button ref={menuButtonRef} className='mobile-menu-button icon-button' type='button' onClick={onMenuOpen} aria-label='Open navigation' aria-expanded={menuOpen} aria-controls='mobile-navigation-drawer'>
@@ -20,6 +21,7 @@ export default function AppHeader({ title, user, organizations, organizationId, 
       </div>
     </div>
     <div className='app-header-actions'>
+      <WorkspaceFinder access={access}/>
       <OrganizationSwitcher organizations={organizations} organizationId={organizationId} onChange={onOrganizationChange} compact/>
       <details className='account-menu'>
         <summary aria-label={`Account menu for ${userLabel(user)}`}>

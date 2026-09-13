@@ -143,3 +143,38 @@ VM deletion verifies cluster-wide absence before skipping Proxmox mutations;
 failed inventory requests never establish absence. The frontend image normalizes
 public static directories to 755 and files to 644 so nginx can read assets even
 when the builder inherits a restrictive umask.
+
+## Branded workspace rebuild (September 2026)
+
+The shared shell now includes **Find a page** (`Ctrl+K` / `Cmd+K`), backed by
+exactly the same role-aware navigation model as the sidebar. The native dialog
+supports Escape, keyboard navigation, and focus return. It navigates pages;
+it does not search private backend resources or grant additional permissions.
+
+- **Overview:** canonical LabGoblin mark, both taglines, role-specific workflow
+  links, VM counts, cluster capacity meters, and explicit unknown capacity data.
+- **Lab VMs:** search name/VMID/node/IP, status filtering, name/VMID sorting,
+  card/list layouts, visible resource identity, refresh-all, and existing verified
+  lifecycle actions with destructive details kept behind disclosure.
+- **Templates:** branded cards or table, enabled/disabled filters, discovery,
+  source node/VMID, and links into classroom assignment. Enabling a catalog
+  template does not itself authorize student provisioning.
+- **Operations:** newest-first history, combined search/action/state filters,
+  separate warnings and failures, summary counts, and expandable full errors.
+  History is retained and existing active-job polling remains authoritative.
+- **Provision:** selection plus a review panel showing template, name prefix,
+  provisioning mode, and automatic start. Existing assignment and durable-job
+  enforcement still applies.
+- **Pools:** searchable management, linked detail pages, a collapsible create/edit
+  form, duplicate-save protection, and latest requested readiness results.
+- **Classroom:** counts and step guidance; dependent roster/assignment failures
+  are shown explicitly and stale responses are ignored.
+- **Inventory:** categories for machines/templates, networks/storage, and media;
+  the template-catalog link now targets `/admin/templates`.
+- **Sign-in and workflow states:** shared LabGoblin branding and a consistent
+  visual treatment using existing tokens, without external fonts or image hosts.
+
+Shared composition lives in `WorkspaceKit.jsx`; appearance in `workspace.css`;
+collection selection logic in `workspaceCollections.js`. Public branding stays
+at `/brand/labgoblin-icon.svg`. No API schema, backend authorization, database
+migration, or console transport was changed by this rebuild.

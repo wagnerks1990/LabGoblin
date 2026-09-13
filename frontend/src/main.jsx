@@ -30,6 +30,7 @@ import ClassroomPage from './pages/ClassroomPage'
 import BootstrapPage from './pages/BootstrapPage'
 import TemplatesPage from './pages/TemplatesPage'
 import './styles.css'
+import './workspace.css'
 import api from './services/api'
 
 const ConsolePage = React.lazy(() => import('./pages/ConsolePage'))

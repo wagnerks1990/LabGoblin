@@ -140,3 +140,8 @@ The canonical GitHub repository is `wagnerks1990/labgoblin`. Active installer, u
 ## AI/coding-agent contract
 
 Agents must read `AI_CONTEXT.md`, `AGENTS.md`, and this file before branding or infrastructure changes. Agents must keep documentation synchronized and must not weaken authorization, tenant isolation, secret handling, auditability, durable operations, update safety, or rollback behavior for the sake of rebranding.
+
+The workspace rebuild applies this identity to the overview hero, sign-in,
+page finder, classroom guidance, provisioning review, and empty/loading states.
+Resource cards and collections use shared token colors, line icons, and the
+canonical SVG mark. Do not replace real resource state with decorative metrics.

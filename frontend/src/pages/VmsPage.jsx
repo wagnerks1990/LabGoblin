@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { EmptyState, ErrorState, LoadingState } from '../components/workflows/WorkflowState'
 import WorkflowStatus from '../components/workflows/WorkflowStatus'
+import { CollectionToolbar, MetricStrip, ViewToggle, WorkspaceHeading } from '../components/ui/WorkspaceKit'
+import NavIcon from '../components/navigation/NavIcon'
+import { selectMachines } from '../state/workspaceCollections'
 import api from '../services/api'
 
 const terminalStates = new Set(['succeeded', 'failed', 'cancelled'])
@@ -12,6 +15,10 @@ const errorDetail = error => {
 }
 
 export default function VmsPage({ setMessage }) {
+  const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [view, setView] = useState('cards')
+  const [sort, setSort] = useState('name')
   const [vms, setVms] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -89,18 +96,23 @@ export default function VmsPage({ setMessage }) {
     }
   }
 
+  const visible = selectMachines(vms, { query, status: statusFilter, sort })
+
   if (loading) return <LoadingState label='Loading your virtual machines…' />
   if (error && !vms.length) return <ErrorState message={error} onRetry={load} retrying={loading} />
 
   return <section>
-    <div className='panel-head'>
-      <div><h1>My virtual machines</h1><p className='muted'>Connect to a running machine or manage its power state.</p></div>
-      <Link className='btn' to='/create'>Provision a VM</Link>
-    </div>
+    <WorkspaceHeading title='Your lab machines' description='Find your machine, connect, and get back to learning.'><Link className='ui-button--secondary btn' to='/operations'>View activity</Link><button type='button' className='ui-button--secondary' onClick={() => load()}>Refresh all</button><Link className='btn' to='/create'>Provision a VM</Link></WorkspaceHeading>
+    <MetricStrip items={[{ label: 'Lab machines', value: vms.length, icon: 'monitor' }, { label: 'Running', value: vms.filter(vm => vm.status === 'running').length, icon: 'pulse' }, { label: 'Stopped', value: vms.filter(vm => vm.status === 'stopped').length, icon: 'server' }, { label: 'Needs attention', value: vms.filter(vm => ['error', 'missing'].includes(vm.status)).length, icon: 'wrench' }]}/>
+    <CollectionToolbar query={query} onQuery={setQuery} label='Search name, VMID, node or IP' count={visible.length} total={vms.length} onReset={() => { setQuery(''); setStatusFilter(''); setSort('name') }}>
+      <label className='ui-field'>Status<select value={statusFilter} onChange={event => setStatusFilter(event.target.value)}><option value=''>All statuses</option>{[...new Set(vms.map(vm => String(vm.status).toLowerCase()))].sort().map(status => <option key={status}>{status}</option>)}</select></label>
+      <label className='ui-field'>Sort by<select value={sort} onChange={event => setSort(event.target.value)}><option value='name'>Name</option><option value='vmid'>VMID</option></select></label><ViewToggle value={view} onChange={setView}/>
+    </CollectionToolbar>
     {error ? <p className='msg error' role='alert'>{error}</p> : null}
     {!vms.length ? <EmptyState title='No virtual machines yet' message='When a classroom assignment is available, provision it here.' action={<Link to='/create'>View available assignments</Link>} /> : null}
-    <div className='card-grid'>
-      {vms.map(vm => {
+    {vms.length > 0 && !visible.length ? <EmptyState title='No matching machines' message='Try a different search or reset the filters.'/> : null}
+    <div className={`resource-collection resource-collection--${view}`}>
+      {visible.map(vm => {
         const state = String(vm.status || '').toLowerCase()
         const missing = ['missing', 'error'].includes(state)
         const running = state === 'running'
@@ -109,11 +121,12 @@ export default function VmsPage({ setMessage }) {
         const canConsole = !missing && vm.allowed_console !== false && vm.console_enabled && allowed.includes('novnc')
         const canRdp = !missing && vm.allowed_rdp !== false && vm.rdp_enabled && allowed.includes('rdp')
         const working = Boolean(busy[vm.id])
-        return <article className='panel' key={vm.id} aria-busy={working}>
+        return <article className='panel resource-card' key={vm.id} aria-busy={working}>
           <div className='panel-head'>
-            <div><h3>{vm.vm_name}</h3><WorkflowStatus value={vm.status} /></div>
+            <div><span className='resource-emblem'><NavIcon name='monitor'/></span><h3>{vm.vm_name}</h3><WorkflowStatus value={vm.status} /></div>
             <button type='button' onClick={() => act(vm, 'status')} disabled={working} aria-label={`Refresh ${vm.vm_name} status`}>Refresh</button>
           </div>
+          <div className='resource-facts'><span>VMID <strong>{vm.vmid}</strong></span><span>Node <strong>{vm.proxmox_node || 'Not assigned'}</strong></span><span>Address <strong>{vm.assigned_ip || vm.hostname || 'Not reported'}</strong></span></div>
           {working ? <p className='muted' role='status'>{busy[vm.id] === 'status' ? 'Refreshing status…' : `${busy[vm.id]} in progress…`}</p> : null}
           {missing ? <p className='msg error'>This VM is unavailable. Refresh its status or ask an instructor for help.</p> : null}
           {running && canConsole ? <button type='button' className='btn-connection' disabled={working} onClick={() => launch(vm, 'console')}>Open console</button>

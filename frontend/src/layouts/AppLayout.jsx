@@ -94,6 +94,7 @@ export default function AppLayout({ children, setUser, user }) {
       <AppSidebar access={access} collapsed={sidebarCollapsed} onToggle={toggleSidebar}/>
       <div className='app-workspace'>
         <AppHeader
+          access={access}
           title={pageTitleForPath(loc.pathname)}
           user={user}
           organizations={organizations}

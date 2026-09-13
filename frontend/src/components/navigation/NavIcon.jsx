@@ -1,4 +1,5 @@
 const paths = {
+  search: <><circle cx='10' cy='10' r='6'/><path d='m15 15 6 6'/></>,
   home: <><path d='M3 10.5 12 3l9 7.5'/><path d='M5 9.5V21h14V9.5M9 21v-7h6v7'/></>,
   monitor: <><rect x='3' y='4' width='18' height='13' rx='2'/><path d='M8 21h8m-4-4v4'/></>,
   plus: <path d='M12 5v14M5 12h14'/>,
