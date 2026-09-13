@@ -382,14 +382,10 @@ async def execute_operation(db: Session, row: DurableOperation) -> None:
                     settings.operation_clone_timeout_seconds,
                 )
             else:
-                try:
-                    await proxmox.get_vm_status(vm.proxmox_node, vm.vmid)
+                if await proxmox.vm_exists(vm.vmid):
                     raise RuntimeError(
                         f"VMID {vm.vmid} already exists in Proxmox and is not owned by this operation"
                     )
-                except Exception as exc:
-                    if not _is_not_found(exc):
-                        raise
                 _validate_operation_authorization(db, row, vm, payload)
                 response = await proxmox.clone_vm(
                     vm.proxmox_node, template.source_vmid, vm.vmid, vm.vm_name

@@ -40,6 +40,9 @@ class _FakeProxmox:
     def __init__(self, cluster_id=None):
         self.cluster_id = cluster_id
 
+    async def vm_exists(self, _vmid):
+        return self.exists
+
     async def clone_vm(self, _node, _source_vmid, _vmid, _name):
         self.exists = True
         return {"data": "UPID:clone"}
