@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { listCurrentOrganizationMembers } from '../services/organizationApi'
+import { MetricStrip } from '../components/ui/WorkspaceKit'
 import api from '../services/api'
 import {
   addEnrollment, bulkAssignRun, changeLabRunState, createClass, createLab, createLabRun,
@@ -19,6 +20,8 @@ export default function ClassroomPage({ setMessage }) {
   const [classes, setClasses] = useState([]); const [labs, setLabs] = useState([]); const [runs, setRuns] = useState([])
   const [pools, setPools] = useState([]); const [members, setMembers] = useState([])
   const [selectedClass, setSelectedClass] = useState(''); const [selectedRun, setSelectedRun] = useState('')
+  const [detailError, setDetailError] = useState('')
+  const [detailLoading, setDetailLoading] = useState(false)
   const [enrollments, setEnrollments] = useState([]); const [assignments, setAssignments] = useState([])
   const [classForm, setClassForm] = useState({ name: '', term: '' })
   const [labForm, setLabForm] = useState({ name: '', description: '', default_pool_id: '', student_can_power_off: false, terminal_enabled: false, console_enabled: true, rdp_enabled: false })
@@ -34,8 +37,17 @@ export default function ClassroomPage({ setMessage }) {
     } catch (error) { setLoadError(detail(error)) } finally { setLoading(false) }
   }
   useEffect(() => { reload() }, [])
-  useEffect(() => { if (selectedClass) listEnrollments(selectedClass).then(setEnrollments).catch(() => setEnrollments([])); else setEnrollments([]) }, [selectedClass])
-  useEffect(() => { if (selectedRun) listRunAssignments(selectedRun).then(setAssignments).catch(() => setAssignments([])); else setAssignments([]) }, [selectedRun])
+  useEffect(() => {
+    let active = true
+    setDetailError(''); setEnrollments([]); setAssignments([])
+    if (!selectedClass) { setDetailLoading(false); return }
+    setDetailLoading(true)
+    Promise.all([listEnrollments(selectedClass), selectedRun ? listRunAssignments(selectedRun) : Promise.resolve([])])
+      .then(([roster, assigned]) => { if (active) { setEnrollments(roster); setAssignments(assigned) } })
+      .catch(error => { if (active) setDetailError(detail(error)) })
+      .finally(() => { if (active) setDetailLoading(false) })
+    return () => { active = false }
+  }, [selectedClass, selectedRun])
 
   const classLabs = useMemo(() => labs.filter(lab => String(lab.class_id) === String(selectedClass)), [labs, selectedClass])
   const selectedRunRow = runs.find(run => String(run.id) === String(selectedRun))
@@ -60,8 +72,12 @@ export default function ClassroomPage({ setMessage }) {
 
   return <section className='page-shell' aria-labelledby='classroom-title'>
     <header className='ui-page-header'><div><p className='muted'>Teaching</p><h2 id='classroom-title'>Classroom</h2><p className='ui-page-header__description'>Build the class in order: roster, blueprint, then scheduled run and VM assignments.</p></div><button type='button' onClick={reload} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh data'}</button></header>
+    <MetricStrip items={[{ label: 'Classes', value: loading || loadError ? null : classes.length, icon: 'classroom' }, { label: 'Blueprints', value: loading || loadError ? null : labs.length, icon: 'template' }, { label: 'Lab runs', value: loading || loadError ? null : runs.length, icon: 'event' }]}/>
+    <div className='workspace-note'><img src='/brand/labgoblin-icon.svg' alt=''/><div><h3>Build. Deploy. Learn. Repeat.</h3><p>{activeStep === 'classes' ? 'Start with a class and enroll its learners.' : activeStep === 'labs' ? 'Define a reusable lab and choose the access students receive.' : 'Schedule the lab, assign learners, and follow their progress.'}</p></div></div>
     {loading ? <p className='muted' role='status'>Loading classroom data…</p> : null}
     {loadError ? <p className='msg error' role='alert'>{loadError}</p> : null}
+    {detailLoading ? <p role='status'>Loading roster and assignments…</p> : null}
+    {detailError ? <p className='msg error' role='alert'>{detailError}</p> : null}
     <div className='ui-tabs__list' role='tablist' aria-label='Classroom workflow'>{steps.map((step, index) => <button key={step.id} id={`classroom-tab-${step.id}`} className='ui-tabs__tab' role='tab' aria-selected={activeStep === step.id} aria-controls={`classroom-panel-${step.id}`} tabIndex={activeStep === step.id ? 0 : -1} onKeyDown={event => moveTabFocus(event, index)} onClick={() => setActiveStep(step.id)}>{step.label}</button>)}</div>
 
     {activeStep === 'classes' ? <section id='classroom-panel-classes' className='panel' role='tabpanel' aria-labelledby='classroom-tab-classes'>
@@ -74,7 +90,7 @@ export default function ClassroomPage({ setMessage }) {
       <label className='ui-field'>Working class<select className='input' value={selectedClass} onChange={event => { setSelectedClass(event.target.value); setSelectedRun('') }}><option value=''>Select a class…</option>{classes.map(row => <option key={row.id} value={row.id}>{row.name}{row.term ? ` — ${row.term}` : ''}</option>)}</select></label>
       {selectedClass ? <>
         <div className='ui-cluster'><label className='ui-field'>Organization member<select className='input' value={memberId} onChange={event => setMemberId(event.target.value)}><option value=''>Select a member…</option>{members.map(row => <option key={row.user_id} value={row.user_id}>{row.username} ({row.role})</option>)}</select></label><button disabled={!memberId} onClick={() => save(async () => { await addEnrollment(selectedClass, {user_id:Number(memberId), role:'student'}); setEnrollments(await listEnrollments(selectedClass)); setMemberId('') }, 'Student enrolled.')}>Enroll student</button></div>
-        {enrollments.length === 0 ? <p className='muted'>No students are enrolled in this class.</p> : <div className='ui-table-wrap' role='region' aria-label='Class roster' tabIndex='0'><table className='ui-table'><thead><tr><th scope='col'>Student</th><th scope='col'>Role</th><th scope='col'>Active</th><th scope='col'>Action</th></tr></thead><tbody>{enrollments.map(row => { const name = members.find(member => member.user_id === row.user_id)?.username || row.user_id; return <tr key={row.id}><th scope='row'>{name}</th><td>{row.role || 'student'}</td><td>{row.is_active ? 'Yes' : 'No'}</td><td><button className='btn-danger' aria-label={`Remove ${name} from class`} onClick={() => save(async () => { await removeEnrollment(selectedClass, row.user_id); setEnrollments(await listEnrollments(selectedClass)) }, 'Enrollment removed.')}>Remove</button></td></tr> })}</tbody></table></div>}
+        {!detailLoading && !detailError && enrollments.length === 0 ? <p className='muted'>No students are enrolled in this class.</p> : <div className='ui-table-wrap' role='region' aria-label='Class roster' tabIndex='0'><table className='ui-table'><thead><tr><th scope='col'>Student</th><th scope='col'>Role</th><th scope='col'>Active</th><th scope='col'>Action</th></tr></thead><tbody>{enrollments.map(row => { const name = members.find(member => member.user_id === row.user_id)?.username || row.user_id; return <tr key={row.id}><th scope='row'>{name}</th><td>{row.role || 'student'}</td><td>{row.is_active ? 'Yes' : 'No'}</td><td><button className='btn-danger' aria-label={`Remove ${name} from class`} onClick={() => save(async () => { await removeEnrollment(selectedClass, row.user_id); setEnrollments(await listEnrollments(selectedClass)) }, 'Enrollment removed.')}>Remove</button></td></tr> })}</tbody></table></div>}
       </> : <p className='muted'>Select a class to manage its roster.</p>}
     </section> : null}
 
@@ -105,7 +121,7 @@ export default function ClassroomPage({ setMessage }) {
       {selectedRunRow ? <>
         <div className='ui-cluster' aria-label='Run actions'><button onClick={() => save(async () => { await bulkAssignRun(selectedRun); setAssignments(await listRunAssignments(selectedRun)) }, 'Assignments created for the active roster.')}>Assign roster</button>{['start','stop','reboot'].map(action => <button key={action} onClick={() => save(() => api.post(`/admin/lab-runs/${selectedRun}/vms/${action}`), `${action} queued for assigned VMs.`)}>{action[0].toUpperCase()+action.slice(1)} all</button>)}{['draft','scheduled'].includes(selectedRunRow.state) && <button onClick={() => save(() => changeLabRunState(selectedRun,'activate'), 'Lab run activated.')}>Activate now</button>}{selectedRunRow.state === 'draft' && selectedRunRow.starts_at && <button onClick={() => save(() => changeLabRunState(selectedRun,'schedule'), 'Lab run scheduled; access will open inside its window.')}>Schedule</button>}{selectedRunRow.state === 'active' && <button className='btn-danger' onClick={endRun}>End run</button>}</div>
         <p className='muted' role='status'>State: {selectedRunRow.state} · Currently open: {selectedRunRow.effective_open ? 'Yes' : 'No'} · Quota: {selectedRunRow.max_vms_per_student} VM(s) per student</p>
-        {assignments.length === 0 ? <p className='muted'>No assignments have been created for this run.</p> : <div className='ui-table-wrap' role='region' aria-label='Run assignments' tabIndex='0'><table className='ui-table'><thead><tr><th scope='col'>Student</th><th scope='col'>Slot</th><th scope='col'>Template</th><th scope='col'>Status</th><th scope='col'>VM</th><th scope='col'>Action</th></tr></thead><tbody>{assignments.map(row => { const name = row.username || row.user_id; return <tr key={row.id}><th scope='row'>{name}</th><td>{row.slot_index}</td><td>{row.template_name || row.template_id}</td><td>{row.status}</td><td>{row.student_vm_id || '-'}</td><td><button className='btn-danger' aria-label={`Revoke assignment for ${name}`} onClick={() => save(async () => { await revokeRunAssignment(selectedRun,row.id); setAssignments(await listRunAssignments(selectedRun)) }, 'Assignment revoked.')}>Revoke</button></td></tr> })}</tbody></table></div>}
+        {!detailLoading && !detailError && assignments.length === 0 ? <p className='muted'>No assignments have been created for this run.</p> : <div className='ui-table-wrap' role='region' aria-label='Run assignments' tabIndex='0'><table className='ui-table'><thead><tr><th scope='col'>Student</th><th scope='col'>Slot</th><th scope='col'>Template</th><th scope='col'>Status</th><th scope='col'>VM</th><th scope='col'>Action</th></tr></thead><tbody>{assignments.map(row => { const name = row.username || row.user_id; return <tr key={row.id}><th scope='row'>{name}</th><td>{row.slot_index}</td><td>{row.template_name || row.template_id}</td><td>{row.status}</td><td>{row.student_vm_id || '-'}</td><td><button className='btn-danger' aria-label={`Revoke assignment for ${name}`} onClick={() => save(async () => { await revokeRunAssignment(selectedRun,row.id); setAssignments(await listRunAssignments(selectedRun)) }, 'Assignment revoked.')}>Revoke</button></td></tr> })}</tbody></table></div>}
       </> : <p className='muted'>Select a run to manage assignments and VM actions.</p>}
     </section> : null}
   </section>

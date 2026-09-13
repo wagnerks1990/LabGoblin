@@ -23,7 +23,8 @@ export default function LoginPage({ onLogin, setMessage }) {
     }
   }
 
-  return <main className='auth-shell'>
+  return <main className='auth-shell auth-shell--branded'>
+    <section className='auth-story' aria-label='About LabGoblin'><p className='eyebrow'>LabGoblin / Virtual lab management</p><h2>Real Skills.<br/><span>Virtual Machines.</span></h2><p>A place to build, practice, and explore. Your next hands-on lab starts here.</p><div className='auth-story-steps'><span>01 / Build</span><span>02 / Deploy</span><span>03 / Learn</span><span>04 / Repeat</span></div></section>
     <form className='auth-card ui-stack' onSubmit={submit} aria-labelledby='login-title'>
       <div className='login-brand'>
         <img src='/brand/labgoblin-icon.svg' alt='' className='login-brand-mark'/>

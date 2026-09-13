@@ -77,3 +77,13 @@ results against the tested commit and environment in the
 Screenshots used for documentation or visual review must contain deterministic,
 sanitized data. Never capture credentials, tokens, private infrastructure
 addresses, or identifiable student data.
+
+### Workspace collection and rendering regression tests
+
+`npm test` also runs `workspace-collections.test.js` and
+`workspace-render.test.js`. The latter loads the actual JSX primitives with
+Vite and renders them through React DOM server to check semantic output and
+unknown capacity handling. It does not execute browser effects, layout, or
+keyboard interactions. No browser dependency or production authentication
+bypass is introduced. See the September evidence in the GUI validation page
+for the blocked local-preview attempt and required manual viewport checks.

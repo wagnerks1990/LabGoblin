@@ -5,6 +5,12 @@ releases begin, material changes are recorded in pull requests and this file.
 
 ## Unreleased
 
+- Expanded the LabGoblin GUI with a branded overview and sign-in, role-aware page
+  finder, searchable VM/template collections, card/list layouts, provisioning
+  review, operation warning/failure filters, pool editor disclosure, classroom
+  summaries, and categorized infrastructure views. Preserve verified lifecycle
+  behavior and surface unknown/error data explicitly.
+
 - Preserve Proxmox power-task warnings while verifying the requested VM state; repair deletion of already-absent guests and normalize static image permissions.
 
 - Automatically refresh the tenant template catalog on administrator inventory and provisioning pages, preserving custom names, IDs and disabled settings. Show discovered networks, storage and media.

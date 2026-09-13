@@ -20,6 +20,15 @@ The source-controlled documentation wiki starts at [`docs/index.md`](docs/index.
 
 LabGoblin is the product identity. **Proxmox VE** is currently the underlying hypervisor integration and is referenced by name only where technically relevant.
 
+## Workspace experience
+
+The branded workspace includes quick page finding (`Ctrl+K` / `Cmd+K`),
+searchable VM and template collections, card/list layouts, a provisioning review,
+an activity center with warning/failure filters, and guided classroom and pool
+management. See [Frontend architecture](docs/frontend-architecture.md) for the
+workflow map and [GUI validation](docs/gui-section-validation.md) for acceptance
+checks and remaining browser validation.
+
 ## Appliance installation
 
 A dedicated Debian or Ubuntu VM on the Proxmox cluster is the recommended deployment target.

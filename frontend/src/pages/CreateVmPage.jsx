@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, LoadingState } from '../components/workflows/Wo
 import api from '../services/api'
 import { listOperations } from '../services/operationsApi'
 import WorkflowStatus from '../components/workflows/WorkflowStatus'
+import { WorkspaceHeading } from '../components/ui/WorkspaceKit'
 import { listMyAssignments } from '../services/classroomApi'
 
 const detail = error => {
@@ -132,10 +133,7 @@ export default function CreateVmPage({ setMessage }) {
 
   const canSubmit = Boolean(templateId && labName.trim() && (mode === 'direct' || assignmentId))
   return <section>
-    <div className='panel-head'>
-      <div><h1>Provision a virtual machine</h1><p className='muted'>Choose an assignment and LabGoblin will create and start the correct VM.</p></div>
-      <Link to='/vms'>Back to my VMs</Link>
-    </div>
+    <WorkspaceHeading eyebrow='Workspace / Provision' title='Start a new lab machine' description='Choose your starting point. Review the selection, then let LabGoblin build your machine.'><Link to='/vms' className='btn ui-button--secondary'>Back to lab machines</Link></WorkspaceHeading>
     {createdVmId ? <section className='panel' aria-label='Provisioning progress' aria-live='polite'>
       <div className='panel-head'><h2>VM creation</h2><WorkflowStatus value={operation?.state || 'queued'} /></div>
       <p>{operation ? `VM ${createdVmId} · ${operation.state}` : 'Waiting for the worker to report progress…'}</p>
@@ -149,7 +147,8 @@ export default function CreateVmPage({ setMessage }) {
       title='No assignment is ready'
       message={assignments.length ? 'Your assignments are already provisioned or outside their active schedule.' : 'Your instructor has not assigned an active lab yet.'}
       action={<Link to='/vms'>Return to my VMs</Link>}
-    /> : <form className='panel' onSubmit={create}>
+    /> : <div className='provision-layout'><form className='panel' onSubmit={create}>
+      <h2>Choose your starting point</h2>
       {usableAssignments.length ? <fieldset>
         <legend>Available assignments</legend>
         <div className='card-grid'>
@@ -187,6 +186,6 @@ export default function CreateVmPage({ setMessage }) {
         <p className='muted'>The VM will start automatically. Progress is available on the Operations page.</p>
       </div> : null}
       <button type='submit' disabled={busy || !canSubmit} style={{ marginTop: 16 }}>{busy ? 'Queuing provisioning…' : 'Provision and start VM'}</button>
-    </form>}
+    </form><aside className='panel provision-review' aria-label='Provisioning review'><p className='eyebrow'>Build. Deploy. Learn. Repeat.</p><img src='/brand/labgoblin-icon.svg' alt=''/><h3>Review your machine</h3><dl><dt>Provisioning mode</dt><dd>{mode === 'assignment' ? 'Classroom assignment' : 'Instructor provisioning'}</dd><dt>Template</dt><dd>{templates.find(template => String(template.id) === templateId)?.name || selectedAssignment?.template_name || 'Choose a template'}</dd><dt>Name prefix</dt><dd>{labName || 'Not entered'}</dd><dt>After creation</dt><dd>Start automatically</dd></dl><p className='muted'>Provisioning is tracked in Operations. A machine is ready only after the worker verifies the result.</p><Link to='/operations'>Open activity center</Link></aside></div>}
   </section>
 }

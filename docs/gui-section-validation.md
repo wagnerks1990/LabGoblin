@@ -115,3 +115,31 @@ interchangeable.
 - Proxmox tickets, JWTs, credentials, private keys, and reusable passwords are
   absent from URLs, storage, responses, diagnostics, and screenshots.
 - SSH terminal controls remain hidden while the feature is disabled.
+
+## September 2026 workspace rebuild evidence
+
+Automated checks cover combined VM search/status/sort, operation action/state/
+warning filters, stable source arrays, rendered null-versus-zero capacity,
+escaped metric content, and labeled search/layout controls. Existing role and
+security contracts remain in the frontend suite. These tests are not browser
+layout or interaction tests.
+
+Cloud Browser could not open the local fixture preview: `ERR_BLOCKED_BY_CLIENT`.
+No screenshots or successful visual checks are claimed for this iteration.
+Before general rollout, validate sanitized student, instructor, tenant admin,
+and platform admin sessions at **320, 390, 768, 1024, 1440 CSS pixels**:
+
+1. Find a page via button and Ctrl/Cmd+K; search, Tab, Enter, Escape, focus return.
+   Restricted routes must remain absent for each role.
+2. Toggle Cards/List, combine search and status, reset filters, and verify resource
+   identity and lifecycle controls. Check long VM names and error text.
+3. Filter successful operations with warnings separately from failed history;
+   expand full failure details and confirm active operations still update.
+4. Create/edit/cancel a pool, search pools, open its details, and check readiness.
+5. Review assignment and instructor provisioning before submitting one disposable
+   VM; confirm server-verified result, power controls, and delete preview.
+6. Check populated, empty, loading, error, and forbidden states. Failed discovery
+   must not appear as a healthy cluster. Missing capacity must not display 0%.
+7. Check page overflow, compact header/drawer, bottom navigation, keyboard focus,
+   sign-in, tenant switching, and live feedback. Console connectivity still
+   requires separate Ubuntu/Proxmox verification.
