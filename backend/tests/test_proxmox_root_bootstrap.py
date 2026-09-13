@@ -88,14 +88,14 @@ async def test_root_bootstrap_creates_and_stores_only_dedicated_token(monkeypatc
                     }
                 },
             )
-        if request.method == "GET" and path.endswith(f"/access/roles/{SERVICE_ROLE}"):
-            return httpx.Response(404, json={"data": None})
+        if request.method == "GET" and path.endswith("/access/roles"):
+            return httpx.Response(200, json={"data": []})
         if request.method == "POST" and path.endswith("/access/roles"):
             assert body["roleid"] == [SERVICE_ROLE]
             assert set(body["privs"][0].split()) == SERVICE_PRIVILEGES
             return httpx.Response(200, json={"data": None})
-        if request.method == "GET" and path.endswith(f"/access/users/{SERVICE_USER}"):
-            return httpx.Response(404, json={"data": None})
+        if request.method == "GET" and path.endswith("/access/users"):
+            return httpx.Response(200, json={"data": []})
         if request.method == "POST" and path.endswith("/access/users"):
             assert body["userid"] == [SERVICE_USER]
             return httpx.Response(200, json={"data": None})
@@ -166,6 +166,8 @@ async def test_root_bootstrap_refuses_broader_existing_role(monkeypatch):
                     }
                 },
             )
+        if request.url.path.endswith("/access/roles"):
+            return httpx.Response(200, json={"data": [{"roleid": SERVICE_ROLE}]})
         if request.url.path.endswith(f"/access/roles/{SERVICE_ROLE}"):
             data = {privilege: 1 for privilege in SERVICE_PRIVILEGES}
             data["Permissions.Modify"] = 1
@@ -206,10 +208,9 @@ async def test_failed_token_validation_removes_created_user_and_role(monkeypatch
                 },
             )
         if request.method == "GET" and (
-            path.endswith(f"/access/roles/{SERVICE_ROLE}")
-            or path.endswith(f"/access/users/{SERVICE_USER}")
+            path.endswith("/access/roles") or path.endswith("/access/users")
         ):
-            return httpx.Response(404)
+            return httpx.Response(200, json={"data": []})
         if request.method in {"POST", "PUT"} and path.endswith("/access/roles"):
             return httpx.Response(200, json={"data": None})
         if request.method == "POST" and path.endswith("/access/users"):
@@ -242,3 +243,29 @@ async def test_failed_token_validation_removes_created_user_and_role(monkeypatch
     finally:
         db.close()
         Base.metadata.drop_all(engine)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["roles", "users"])
+@pytest.mark.parametrize(
+    "status,data", [(500, None), (403, None), (200, None), (200, [{}])]
+)
+async def test_identity_discovery_fails_closed(monkeypatch, kind, status, data):
+    def handler(request):
+        assert request.method == "GET"
+        assert request.url.path.endswith("/access/" + kind)
+        return httpx.Response(status, json={"data": data})
+
+    _install_transport(monkeypatch, handler)
+    service = ProxmoxBootstrapService(None)
+    operation = (
+        service._ensure_service_role
+        if kind == "roles"
+        else service._create_service_user
+    )
+    with pytest.raises((httpx.HTTPStatusError, ProxmoxBootstrapError)):
+        await operation(
+            "https://pve.example.test/api2/json",
+            True,
+            {"ticket": "test", "csrf": "test"},
+        )

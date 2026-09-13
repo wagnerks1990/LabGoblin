@@ -112,3 +112,5 @@ Passing source-contract tests does not prove browser layout or interaction.
   `frontend/src/components/navigation/`
 - Frontend validation: `frontend/tests/`,
   `docs/development/frontend-testing.md`
+
+Bootstrap discovers identity existence through successful role/user collection responses. Proxmox can return HTTP 500 for missing individual identities; never treat arbitrary HTTP 500 failures as absence. Discovery failures must stop setup.

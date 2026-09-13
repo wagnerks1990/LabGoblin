@@ -65,3 +65,5 @@ Placement policy options are `manual` (requires an online default node),
 
 ## Cluster readiness panel
 The Proxmox Setup page includes a Cluster Readiness panel with PASS/WARN/FAIL, eligible/excluded nodes, reasons, and recommended next steps.
+
+Bootstrap discovers identity existence through successful role/user collection responses. Proxmox can return HTTP 500 for missing individual identities; never treat arbitrary HTTP 500 failures as absence. Discovery failures must stop setup.

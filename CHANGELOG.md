@@ -5,6 +5,8 @@ releases begin, material changes are recorded in pull requests and this file.
 
 ## Unreleased
 
+- Fixed Proxmox bootstrap on servers returning HTTP 500 for nonexistent roles or users by discovering identities through collection endpoints.
+
 - Re-enabled Proxmox root bootstrap as a one-time, secure-context workflow that
   creates and validates a fixed least-privilege `labgoblin@pve` service user,
   role, and token without storing the root password or creating a root token.
