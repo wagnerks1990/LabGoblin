@@ -159,6 +159,8 @@ jobs:
           docker compose -f docker-compose.yml -f docker-compose.live-test.yml ps
           docker compose -f docker-compose.yml -f docker-compose.live-test.yml logs --no-color
           exit 1
+      - name: Verify public branding asset is readable
+        run: curl --fail --silent --show-error http://127.0.0.1:8080/brand/labgoblin-icon.svg -o /dev/null
       - name: Run destructive disposable live test
         run: >-
           python scripts/live_test.py

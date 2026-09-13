@@ -1,4 +1,5 @@
 import asyncio
+import re
 import httpx
 from app.core.config import settings
 from app.architecture.async_retry import async_retry_with_backoff
@@ -129,7 +130,12 @@ class ProxmoxClient:
             return r.json()["data"]
 
     async def wait_for_task(
-        self, node: str, upid: str, timeout_seconds: int = 120, on_poll=None
+        self,
+        node: str,
+        upid: str,
+        timeout_seconds: int = 120,
+        on_poll=None,
+        allow_warnings: bool = False,
     ):
         deadline = asyncio.get_event_loop().time() + timeout_seconds
         while True:
@@ -152,7 +158,9 @@ class ProxmoxClient:
                 raise TimeoutError(f"Failed polling task {upid}: {rr.error}")
             task = rr.value
             if task.get("status") == "stopped":
-                if str(task.get("exitstatus") or "").upper() != "OK":
+                exitstatus = str(task.get("exitstatus") or "")
+                warning = bool(re.fullmatch(r"WARNINGS: [1-9][0-9]*", exitstatus))
+                if exitstatus != "OK" and not (allow_warnings and warning):
                     raise RuntimeError(
                         f"Proxmox task failed: {task.get('exitstatus') or 'unknown'}"
                     )

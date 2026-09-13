@@ -61,6 +61,7 @@ export default function OperationsPage() {
         return <article className='panel' key={operation.id} aria-live={activeStates.has(state) ? 'polite' : undefined}>
           <div className='panel-head'><h3>{label(operation.operation_type)}</h3><WorkflowStatus value={operation.state} /></div>
           <p>{label(operation.target_type)} {operation.target_id}</p>
+          {(operation.result?.warnings || []).map((warning, index) => <p className='ui-alert ui-alert--warning' key={index}>Completed with warning: {warning.message}</p>)}
           {operation.error ? <p className='msg error' role='alert'>{operation.error}</p> : null}
           {activeStates.has(state) ? <p className='muted'>Attempt {operation.attempts || 0}. This status refreshes automatically.</p> : null}
           <details>

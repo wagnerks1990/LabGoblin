@@ -233,3 +233,6 @@ Proxmox task through completion. Failed inventory requests stop creation; HTTP 5
 is never interpreted as absence. The provisioning page displays operation status
 and errors, and Operations opens on all history with a Failed filter. Local tests
 do not establish the cause of a particular production failure.
+
+Power-task warnings remain visible without falsely failing a verified running VM.
+See [Proxmox operations guidance](docs/proxmox-setup-wizard.md) for the verification boundary.

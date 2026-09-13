@@ -5,6 +5,8 @@ releases begin, material changes are recorded in pull requests and this file.
 
 ## Unreleased
 
+- Preserve Proxmox power-task warnings while verifying the requested VM state; repair deletion of already-absent guests and normalize static image permissions.
+
 - Automatically refresh the tenant template catalog on administrator inventory and provisioning pages, preserving custom names, IDs and disabled settings. Show discovered networks, storage and media.
 - Check cluster VM inventory before cloning and expose durable creation status and failures in provisioning and operation history.
 
