@@ -97,6 +97,28 @@ class ProxmoxClient:
             r.raise_for_status()
             return r.json()
 
+    async def vm_exists(self, vmid: int) -> bool:
+        """Check cluster-wide IDs without querying a nonexistent guest's status."""
+        async with httpx.AsyncClient(verify=self.verify_ssl, timeout=30) as client:
+            response = await client.get(
+                f"{self.base_url}/cluster/resources",
+                headers=self.headers,
+                params={"type": "vm"},
+            )
+            response.raise_for_status()
+            rows = response.json().get("data")
+        if not isinstance(rows, list):
+            raise RuntimeError("Invalid Proxmox VM inventory response")
+        identifiers = set()
+        for row in rows:
+            if not isinstance(row, dict) or row.get("type") not in {"qemu", "lxc"}:
+                raise RuntimeError("Invalid Proxmox VM inventory entry")
+            identifier = row.get("vmid")
+            if isinstance(identifier, bool) or not str(identifier).isdigit():
+                raise RuntimeError("Invalid Proxmox VM inventory identifier")
+            identifiers.add(int(identifier))
+        return vmid in identifiers
+
     async def get_vm_status(self, node: str, vmid: int):
         async with httpx.AsyncClient(verify=self.verify_ssl, timeout=30) as client:
             r = await client.get(

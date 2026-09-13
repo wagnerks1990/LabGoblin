@@ -73,6 +73,9 @@ class Handler(BaseHTTPRequestHandler):
             if parts == ["cluster", "resources"]:
                 rows = [{"type": "node", "node": NODE, "status": "online"}]
                 rows.extend({"type": "qemu", **vm} for vm in _vms.values())
+                query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+                if query.get("type") == ["vm"]:
+                    rows = [row for row in rows if row["type"] in {"qemu", "lxc"}]
                 return self._json(200, rows)
             if parts == ["nodes"]:
                 return self._json(200, [{"node": NODE, "status": "online"}])

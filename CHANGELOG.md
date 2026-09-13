@@ -5,6 +5,9 @@ releases begin, material changes are recorded in pull requests and this file.
 
 ## Unreleased
 
+- Automatically refresh the tenant template catalog on administrator inventory and provisioning pages, preserving custom names, IDs and disabled settings. Show discovered networks, storage and media.
+- Check cluster VM inventory before cloning and expose durable creation status and failures in provisioning and operation history.
+
 - Fixed Proxmox 9 role creation by using VM.GuestAgent.Audit with capability-checked legacy fallback and privilege preflight.
 
 - Fixed Proxmox bootstrap on servers returning HTTP 500 for nonexistent roles or users by discovering identities through collection endpoints.

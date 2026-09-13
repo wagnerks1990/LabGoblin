@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { AccessContext } from '../components/AccessControl'
 import { EmptyState, ErrorState, LoadingState } from '../components/workflows/WorkflowState'
 import api from '../services/api'
+import { listOperations } from '../services/operationsApi'
+import WorkflowStatus from '../components/workflows/WorkflowStatus'
 import { listMyAssignments } from '../services/classroomApi'
 
 const detail = error => {
@@ -23,15 +25,22 @@ export default function CreateVmPage({ setMessage }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [warning, setWarning] = useState('')
+  const [createdVmId, setCreatedVmId] = useState(null)
+  const [operation, setOperation] = useState(null)
+  const [operationError, setOperationError] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
     setError('')
     setWarning('')
+    if (access.platformAdmin) {
+      try { await api.post('/admin/proxmox/templates/sync') }
+      catch (requestError) { setWarning(`Template refresh failed: ${detail(requestError)}`) }
+    }
     const requests = [api.get('/templates'), listMyAssignments()]
     if (access.platformAdmin) requests.push(api.get('/admin/proxmox/templates/availability'))
     const [templatesResult, assignmentsResult, availabilityResult] = await Promise.allSettled(requests)
-    const templateRows = templatesResult.status === 'fulfilled' && Array.isArray(templatesResult.value.data) ? templatesResult.value.data : []
+    const templateRows = templatesResult.status === 'fulfilled' && Array.isArray(templatesResult.value.data) ? templatesResult.value.data.filter(row => row.enabled) : []
     const assignmentRows = assignmentsResult.status === 'fulfilled' && Array.isArray(assignmentsResult.value) ? assignmentsResult.value : []
     setTemplates(templateRows)
     setAssignments(assignmentRows)
@@ -58,6 +67,28 @@ export default function CreateVmPage({ setMessage }) {
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    if (!createdVmId) return
+    let cancelled = false
+    let timer
+    const poll = async () => {
+      let finished = false
+      try {
+        const rows = await listOperations()
+        if (cancelled) return
+        const found = rows.find(row => row.operation_type === 'vm.create' && String(row.target_id) === String(createdVmId))
+        setOperation(found || null)
+        setOperationError('')
+        finished = found && !['queued', 'running'].includes(found.state)
+      } catch (requestError) {
+        if (!cancelled) setOperationError(detail(requestError))
+      }
+      if (!cancelled && !finished) timer = setTimeout(poll, 2000)
+    }
+    poll()
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [createdVmId])
+
   const usableAssignments = useMemo(() => assignments.filter(row => row.can_provision), [assignments])
   const selectedAssignment = assignments.find(row => String(row.id) === assignmentId)
   const selectedAvailability = availability.find(row => String(row.template_id) === String(templateId))
@@ -81,6 +112,9 @@ export default function CreateVmPage({ setMessage }) {
         lab_name: labName,
         auto_start: true,
       })
+      setOperationError('')
+      setCreatedVmId(response.data.id)
+      setOperation(null)
       setMessage({ type: 'success', text: response.data.message || 'VM provisioning was queued.' })
       if (mode === 'assignment') {
         setAssignments(rows => rows.map(row => String(row.id) === assignmentId ? { ...row, can_provision: false, student_vm_id: response.data.id } : row))
@@ -102,6 +136,13 @@ export default function CreateVmPage({ setMessage }) {
       <div><h1>Provision a virtual machine</h1><p className='muted'>Choose an assignment and LabGoblin will create and start the correct VM.</p></div>
       <Link to='/vms'>Back to my VMs</Link>
     </div>
+    {createdVmId ? <section className='panel' aria-label='Provisioning progress' aria-live='polite'>
+      <div className='panel-head'><h2>VM creation</h2><WorkflowStatus value={operation?.state || 'queued'} /></div>
+      <p>{operation ? `VM ${createdVmId} · ${operation.state}` : 'Waiting for the worker to report progress…'}</p>
+      {operation?.error ? <p className='msg error' role='alert'>{operation.error}</p> : null}
+      {operationError ? <p className='msg error' role='alert'>Progress could not be refreshed: {operationError}</p> : null}
+      <Link to='/operations'>View operation details</Link>
+    </section> : null}
     {warning ? <p className='msg error' role='alert'>{warning}</p> : null}
 
     {!usableAssignments.length && !access.tenantInstructor ? <EmptyState
@@ -136,7 +177,7 @@ export default function CreateVmPage({ setMessage }) {
           <label htmlFor='provision-lab-name'>VM name prefix</label>
           <input id='provision-lab-name' className='input' value={labName} onChange={event => setLabName(event.target.value)} />
           {selectedAvailability && !selectedAvailability.can_balance_across_all_nodes ? <p className='msg'>Placement is limited to {(selectedAvailability.available_nodes || []).join(', ') || 'the source node'}. {selectedAvailability.recommended_action || ''}</p> : null}
-          {!templates.length ? <p className='muted'>No organization templates are available. Import and enable a template first.</p> : null}
+          {!templates.length ? <p className='muted'>No organization templates are available. Ask an administrator to refresh the template catalog and enable a discovered template.</p> : null}
         </div> : null}
       </details> : null}
 

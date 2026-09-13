@@ -11,7 +11,7 @@ export default function OperationsPage() {
   const [operations, setOperations] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [filter, setFilter] = useState('active')
+  const [filter, setFilter] = useState('all')
 
   const load = useCallback(async ({ quiet = false } = {}) => {
     if (!quiet) setLoading(true)
@@ -36,7 +36,7 @@ export default function OperationsPage() {
 
   const visible = useMemo(() => filter === 'active'
     ? operations.filter(operation => activeStates.has(String(operation.state).toLowerCase()))
-    : operations, [operations, filter])
+    : filter === 'failed' ? operations.filter(operation => String(operation.state).toLowerCase() === 'failed') : operations, [operations, filter])
 
   if (loading) return <LoadingState label='Loading operation activity…' />
   if (error && !operations.length) return <ErrorState message={error} onRetry={load} retrying={loading} />
@@ -49,10 +49,11 @@ export default function OperationsPage() {
     {error ? <p className='msg error' role='alert'>{error}</p> : null}
     <div className='group' role='group' aria-label='Filter operations'>
       <button type='button' aria-pressed={filter === 'active'} onClick={() => setFilter('active')}>Active ({operations.filter(operation => activeStates.has(String(operation.state).toLowerCase())).length})</button>
+      <button type='button' aria-pressed={filter === 'failed'} onClick={() => setFilter('failed')}>Failed ({operations.filter(operation => String(operation.state).toLowerCase() === 'failed').length})</button>
       <button type='button' aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>History ({operations.length})</button>
     </div>
     {!visible.length ? <EmptyState
-      title={filter === 'active' ? 'No operations in progress' : 'No operation history yet'}
+      title={filter === 'active' ? 'No operations in progress' : filter === 'failed' ? 'No failed operations' : 'No operation history yet'}
       message={filter === 'active' && operations.length ? 'Completed and failed operations are available under History.' : 'Provisioning and VM actions will appear here.'}
     /> : <div className='card-grid' style={{ marginTop: 16 }}>
       {visible.map(operation => {

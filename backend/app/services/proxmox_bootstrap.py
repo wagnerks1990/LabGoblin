@@ -398,7 +398,7 @@ class ProxmoxBootstrapService:
     async def discover_templates(self, cluster: ProxmoxCluster) -> list[dict]:
         headers = self._cluster_headers(cluster)
         if not headers:
-            return []
+            raise RuntimeError("Proxmox credentials are not configured")
         out: list[dict] = []
         async with httpx.AsyncClient(
             verify=cluster.verify_ssl,
@@ -408,14 +408,19 @@ class ProxmoxBootstrapService:
         ) as client:
             nodes_resp = await client.get(f"{cluster.api_url}/nodes")
             nodes_resp.raise_for_status()
-            for node in nodes_resp.json().get("data", []):
-                node_name = node.get("node")
+            nodes = nodes_resp.json().get("data")
+            if not isinstance(nodes, list):
+                raise RuntimeError("Invalid Proxmox node inventory")
+            for node in nodes:
+                node_name = node.get("node") if isinstance(node, dict) else None
                 if not node_name:
-                    continue
+                    raise RuntimeError("Invalid Proxmox node inventory")
                 v = await client.get(f"{cluster.api_url}/nodes/{node_name}/qemu")
-                if v.status_code >= 400:
-                    continue
-                for vm in v.json().get("data", []):
+                v.raise_for_status()
+                guests = v.json().get("data")
+                if not isinstance(guests, list):
+                    raise RuntimeError("Invalid Proxmox template inventory")
+                for vm in guests:
                     if vm.get("template") != 1:
                         continue
                     out.append(

@@ -215,3 +215,21 @@ This repository is development software intended for fresh installation. LabGobl
 ## Future expansion-ready
 
 The architecture leaves space for quotas, scheduled cleanup, snapshots, VLAN/private network workflows, SSO providers, embedded remote consoles, and broader hypervisor abstraction.
+
+### Automatic inventory and provisioning status
+
+
+Template catalog refresh runs automatically when a platform administrator opens
+Templates, Proxmox inventory, or VM provisioning. It discovers the active cluster
+and upserts templates into the selected organization while preserving catalog IDs,
+custom names, and disabled settings. Existing VMs remain inventory observations;
+discovery does not grant student access or transfer ownership. Networks, storage,
+and installation media are read from the cluster. Refresh is page-triggered, not a
+background synchronization daemon. Template deletion and disk replication are not
+automatic.
+
+VM creation checks the cluster VM inventory before cloning, then tracks the durable
+Proxmox task through completion. Failed inventory requests stop creation; HTTP 500
+is never interpreted as absence. The provisioning page displays operation status
+and errors, and Operations opens on all history with a Failed filter. Local tests
+do not establish the cause of a particular production failure.

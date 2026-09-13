@@ -35,7 +35,7 @@ See the [V2 rebuild roadmap](roadmap/v2-rebuild.md) for implementation order.
 ## Core classroom workflow
 
 1. An administrator connects a Proxmox VE cluster with a least-privilege token.
-2. An administrator imports approved templates and configures placement policy.
+2. An administrator opens Templates to discover the active cluster catalog automatically, reviews enabled templates, and configures placement policy.
 3. A teacher creates a class, imports a roster, and defines a lab.
 4. LabGoblin creates or allocates isolated resources for students or teams.
 5. Students launch their assigned systems through the supported console.

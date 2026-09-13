@@ -8,6 +8,7 @@ from app.api.deps import require_role
 from app.db.session import get_db
 from app.models.models import (
     ProxmoxCluster,
+    Organization,
     ProxmoxNode,
     ProxmoxClusterDefault,
     VMTemplate,
@@ -815,31 +816,58 @@ async def sync_templates(
             status_code=404, detail="No active Proxmox cluster configured"
         )
     discovered = await ProxmoxBootstrapService(db).discover_templates(active)
+    # Serialize catalog updates for the selected tenant, preserving existing IDs.
+    db.query(Organization).filter(
+        Organization.id == organization.id
+    ).with_for_update().one()
+    catalog = (
+        db.query(VMTemplate).filter(VMTemplate.organization_id == organization.id).all()
+    )
+    names = {row.name for row in catalog}
     imported = []
     for t in discovered:
-        vmid = int(t.get("vmid"))
-        row = (
-            db.query(VMTemplate)
-            .filter(
-                VMTemplate.organization_id == organization.id,
-                VMTemplate.proxmox_cluster_id == active.id,
-                VMTemplate.source_vmid == vmid,
-            )
-            .first()
+        vmid = int(t["vmid"])
+        node = t["node"]
+        row = next(
+            (
+                item
+                for item in catalog
+                if item.proxmox_cluster_id == active.id and item.source_vmid == vmid
+            ),
+            None,
         )
         if row is None:
+            legacy = [
+                item
+                for item in catalog
+                if item.proxmox_cluster_id is None
+                and item.source_vmid == vmid
+                and item.proxmox_node == node
+            ]
+            if len(legacy) == 1:
+                row = legacy[0]
+                row.proxmox_cluster_id = active.id
+        if row is None:
+            base = str(t.get("name") or f"template-{vmid}")[:100]
+            name = base
+            suffix = 0
+            while name in names:
+                suffix += 1
+                ending = f"-{active.id}-{vmid}-{suffix}"
+                name = base[: 100 - len(ending)] + ending
             row = VMTemplate(
                 organization_id=organization.id,
                 proxmox_cluster_id=active.id,
-                name=t.get("name") or f"template-{vmid}",
-                proxmox_node=t.get("node"),
+                name=name,
+                proxmox_node=node,
                 source_vmid=vmid,
                 enabled=True,
             )
             db.add(row)
+            catalog.append(row)
+            names.add(name)
         else:
-            row.name = t.get("name") or row.name
-            row.proxmox_node = t.get("node") or row.proxmox_node
+            row.proxmox_node = node
         db.flush()
         imported.append(
             {
