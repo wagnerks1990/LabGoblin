@@ -181,8 +181,16 @@ class ProxmoxBootstrapService:
     ) -> bool:
         role_path = f"{api_url}/access/roles/{SERVICE_ROLE}"
         async with self._root_client(auth, verify_ssl) as client:
-            existing = await client.get(role_path)
-            if existing.status_code == 200:
+            listing = await client.get(f"{api_url}/access/roles")
+            listing.raise_for_status()
+            rows = listing.json().get("data")
+            if not isinstance(rows, list) or any(
+                not isinstance(row, dict) or "roleid" not in row for row in rows
+            ):
+                raise ProxmoxBootstrapError("Invalid Proxmox role discovery response")
+            if any(row["roleid"] == SERVICE_ROLE for row in rows):
+                existing = await client.get(role_path)
+                existing.raise_for_status()
                 data = existing.json().get("data", {})
                 actual = {
                     key for key, enabled in data.items() if enabled in (1, True, "1")
@@ -192,8 +200,6 @@ class ProxmoxBootstrapService:
                         f"Existing {SERVICE_ROLE} has unexpected privileges; refusing to modify it"
                     )
                 return False
-            if existing.status_code != 404:
-                existing.raise_for_status()
             created = await client.post(
                 f"{api_url}/access/roles",
                 data={
@@ -207,15 +213,18 @@ class ProxmoxBootstrapService:
     async def _create_service_user(
         self, api_url: str, verify_ssl: bool, auth: dict
     ) -> None:
-        encoded_user = quote(SERVICE_USER, safe="")
         async with self._root_client(auth, verify_ssl) as client:
-            existing = await client.get(f"{api_url}/access/users/{encoded_user}")
-            if existing.status_code == 200:
+            listing = await client.get(f"{api_url}/access/users")
+            listing.raise_for_status()
+            rows = listing.json().get("data")
+            if not isinstance(rows, list) or any(
+                not isinstance(row, dict) or "userid" not in row for row in rows
+            ):
+                raise ProxmoxBootstrapError("Invalid Proxmox user discovery response")
+            if any(row["userid"] == SERVICE_USER for row in rows):
                 raise ProxmoxBootstrapError(
                     f"{SERVICE_USER} already exists; refusing to take ownership automatically"
                 )
-            if existing.status_code != 404:
-                existing.raise_for_status()
             created = await client.post(
                 f"{api_url}/access/users",
                 data={
