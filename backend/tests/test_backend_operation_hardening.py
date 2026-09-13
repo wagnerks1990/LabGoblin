@@ -406,6 +406,9 @@ class _LifecycleClient:
 
 
 class _DeleteClient:
+    async def vm_exists(self, _vmid):
+        return True
+
     stop_upid = None
     status = "running"
     delete_calls = 0
@@ -575,6 +578,62 @@ def test_vmid_allocator_uses_cluster_local_maximum():
         db.commit()
         assert allocate_vmid(db, "proxmox-cluster:1", proxmox_cluster_id=1) == 200011
         assert allocate_vmid(db, "proxmox-cluster:2", proxmox_cluster_id=2) == 200002
+    finally:
+        db.close()
+        Base.metadata.drop_all(engine)
+
+
+def test_warning_requires_observed_running_state(monkeypatch):
+    import json
+
+    class WarningClient(_LifecycleClient):
+        async def wait_for_task(self, _node, _upid, **kwargs):
+            assert kwargs["allow_warnings"] is True
+            return {"exitstatus": "WARNINGS: 1"}
+
+    engine, db = _database()
+    try:
+        data = _classroom(db)
+        monkeypatch.setattr(
+            "app.services.operation_service.ProxmoxClient", WarningClient
+        )
+        WarningClient.upid = "UPID:start"
+        WarningClient.status = "stopped"
+        row = _operation(db, data, requested_by=data["instructors"][0].id)
+        with pytest.raises(RuntimeError, match="did not observe"):
+            asyncio.run(execute_operation(db, row))
+        WarningClient.status = "running"
+        asyncio.run(execute_operation(db, row))
+        assert row.state == "succeeded"
+        assert json.loads(row.result_json)["warnings"][0]["message"] == "WARNINGS: 1"
+    finally:
+        db.close()
+        Base.metadata.drop_all(engine)
+
+
+def test_delete_absent_vm_uses_inventory_without_mutation(monkeypatch):
+    class AbsentClient(_DeleteClient):
+        async def vm_exists(self, _vmid):
+            return False
+
+        async def get_vm_status(self, *_args):
+            raise AssertionError("Absent guest must not be queried")
+
+        async def delete_vm(self, *_args):
+            raise AssertionError("Absent guest must not be deleted")
+
+    engine, db = _database()
+    try:
+        data = _classroom(db)
+        monkeypatch.setattr(
+            "app.services.operation_service.ProxmoxClient", AbsentClient
+        )
+        row = _operation(
+            db, data, requested_by=data["instructors"][0].id, operation_type="vm.delete"
+        )
+        asyncio.run(execute_operation(db, row))
+        assert row.state == "succeeded"
+        assert data["vms"][0].deleted_at is not None
     finally:
         db.close()
         Base.metadata.drop_all(engine)

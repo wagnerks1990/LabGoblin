@@ -5,6 +5,7 @@ import re
 import uuid
 from datetime import datetime, timedelta
 
+import httpx
 from fastapi import HTTPException
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -340,12 +341,26 @@ async def execute_operation(db: Session, row: DurableOperation) -> None:
         )
         db.commit()
 
+    task_warnings = []
+
     async def wait_for_task(
         proxmox: ProxmoxClient, node: str, upid: str, timeout_seconds: int
     ) -> None:
-        await proxmox.wait_for_task(
-            node, upid, timeout_seconds=timeout_seconds, on_poll=renew_lease
+        allow_warnings = row.operation_type in {"vm.start", "vm.stop", "vm.reboot"} or (
+            row.operation_type == "vm.create"
+            and payload.get("_phase") == "start_submitted"
         )
+        task = await proxmox.wait_for_task(
+            node,
+            upid,
+            timeout_seconds=timeout_seconds,
+            on_poll=renew_lease,
+            allow_warnings=allow_warnings,
+        )
+        if isinstance(task, dict) and str(task.get("exitstatus", "")).startswith(
+            "WARNINGS:"
+        ):
+            task_warnings.append({"task_id": upid, "message": task["exitstatus"]})
 
     def persist_task(upid: object, phase: str | None = None) -> str | None:
         row.proxmox_upid = str(upid or "") or None
@@ -461,18 +476,53 @@ async def execute_operation(db: Session, row: DurableOperation) -> None:
             result = {"deleted": True, "already_absent": True}
         else:
             proxmox = ProxmoxClient(vm.proxmox_cluster_id)
-            try:
-                phase = payload.get("_phase")
-                if phase in {"stop_submitted", "delete_submitted"} and row.proxmox_upid:
-                    timeout = (
-                        settings.operation_delete_timeout_seconds
-                        if phase == "delete_submitted"
-                        else settings.operation_task_timeout_seconds
-                    )
-                    await wait_for_task(
-                        proxmox, vm.proxmox_node, row.proxmox_upid, timeout
-                    )
-                    if phase == "stop_submitted":
+            if await proxmox.vm_exists(vm.vmid):
+                try:
+                    phase = payload.get("_phase")
+                    if (
+                        phase in {"stop_submitted", "delete_submitted"}
+                        and row.proxmox_upid
+                    ):
+                        timeout = (
+                            settings.operation_delete_timeout_seconds
+                            if phase == "delete_submitted"
+                            else settings.operation_task_timeout_seconds
+                        )
+                        await wait_for_task(
+                            proxmox, vm.proxmox_node, row.proxmox_upid, timeout
+                        )
+                        if phase == "stop_submitted":
+                            stopped = await proxmox.get_vm_status(
+                                vm.proxmox_node, vm.vmid
+                            )
+                            if stopped.get("status") != "stopped":
+                                raise RuntimeError(
+                                    "Proxmox did not observe the VM stopped before delete"
+                                )
+                            row.proxmox_upid = None
+                            payload["_phase"] = "stopped"
+                            row.payload_json = json.dumps(payload, sort_keys=True)
+                            renew_lease()
+
+                    live = await proxmox.get_vm_status(vm.proxmox_node, vm.vmid)
+                    if (
+                        live.get("status") == "running"
+                        and payload.get("_phase") != "delete_submitted"
+                    ):
+                        _validate_operation_authorization(db, row, vm, payload)
+                        stop = await proxmox.stop_vm(vm.proxmox_node, vm.vmid)
+                        stop_upid = stop.get("data") if isinstance(stop, dict) else None
+                        persist_task(stop_upid, "stop_submitted")
+                        if not row.proxmox_upid:
+                            raise RuntimeError(
+                                "Proxmox stop did not return a task identifier before delete"
+                            )
+                        await wait_for_task(
+                            proxmox,
+                            vm.proxmox_node,
+                            row.proxmox_upid,
+                            settings.operation_task_timeout_seconds,
+                        )
                         stopped = await proxmox.get_vm_status(vm.proxmox_node, vm.vmid)
                         if stopped.get("status") != "stopped":
                             raise RuntimeError(
@@ -482,58 +532,39 @@ async def execute_operation(db: Session, row: DurableOperation) -> None:
                         payload["_phase"] = "stopped"
                         row.payload_json = json.dumps(payload, sort_keys=True)
                         renew_lease()
-
-                live = await proxmox.get_vm_status(vm.proxmox_node, vm.vmid)
-                if (
-                    live.get("status") == "running"
-                    and payload.get("_phase") != "delete_submitted"
-                ):
-                    _validate_operation_authorization(db, row, vm, payload)
-                    stop = await proxmox.stop_vm(vm.proxmox_node, vm.vmid)
-                    stop_upid = stop.get("data") if isinstance(stop, dict) else None
-                    persist_task(stop_upid, "stop_submitted")
-                    if not row.proxmox_upid:
-                        raise RuntimeError(
-                            "Proxmox stop did not return a task identifier before delete"
+                    if payload.get("_phase") != "delete_submitted":
+                        _validate_operation_authorization(db, row, vm, payload)
+                        response = await proxmox.delete_vm(vm.proxmox_node, vm.vmid)
+                        persist_task(response.get("data"), "delete_submitted")
+                        if not row.proxmox_upid:
+                            raise RuntimeError(
+                                "Proxmox delete did not return a task identifier"
+                            )
+                        await wait_for_task(
+                            proxmox,
+                            vm.proxmox_node,
+                            row.proxmox_upid,
+                            settings.operation_delete_timeout_seconds,
                         )
-                    await wait_for_task(
-                        proxmox,
-                        vm.proxmox_node,
-                        row.proxmox_upid,
-                        settings.operation_task_timeout_seconds,
-                    )
-                    stopped = await proxmox.get_vm_status(vm.proxmox_node, vm.vmid)
-                    if stopped.get("status") != "stopped":
+                    try:
+                        await proxmox.get_vm_status(vm.proxmox_node, vm.vmid)
                         raise RuntimeError(
-                            "Proxmox did not observe the VM stopped before delete"
+                            "Proxmox still reports the VM after deletion"
                         )
-                    row.proxmox_upid = None
-                    payload["_phase"] = "stopped"
-                    row.payload_json = json.dumps(payload, sort_keys=True)
-                    renew_lease()
-                if payload.get("_phase") != "delete_submitted":
-                    _validate_operation_authorization(db, row, vm, payload)
-                    response = await proxmox.delete_vm(vm.proxmox_node, vm.vmid)
-                    persist_task(response.get("data"), "delete_submitted")
-                    if not row.proxmox_upid:
-                        raise RuntimeError(
-                            "Proxmox delete did not return a task identifier"
-                        )
-                    await wait_for_task(
-                        proxmox,
-                        vm.proxmox_node,
-                        row.proxmox_upid,
-                        settings.operation_delete_timeout_seconds,
-                    )
-                try:
-                    await proxmox.get_vm_status(vm.proxmox_node, vm.vmid)
-                    raise RuntimeError("Proxmox still reports the VM after deletion")
+                    except Exception as exc:
+                        if not _is_not_found(exc):
+                            raise
                 except Exception as exc:
-                    if not _is_not_found(exc):
+                    if not (
+                        _is_not_found(exc)
+                        or (
+                            isinstance(exc, httpx.HTTPStatusError)
+                            and exc.response.status_code == 500
+                        )
+                    ):
                         raise
-            except Exception as exc:
-                if not _is_not_found(exc):
-                    raise
+                    if await proxmox.vm_exists(vm.vmid):
+                        raise
             assignment = (
                 db.query(LabAssignment)
                 .filter(LabAssignment.student_vm_id == vm.id)
@@ -550,6 +581,8 @@ async def execute_operation(db: Session, row: DurableOperation) -> None:
     else:
         raise RuntimeError(f"Unsupported operation type: {row.operation_type}")
 
+    if task_warnings:
+        result["warnings"] = task_warnings
     row.state = "succeeded"
     row.result_json = json.dumps(result, sort_keys=True)
     row.error = None

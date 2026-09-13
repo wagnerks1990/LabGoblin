@@ -132,3 +132,14 @@ Proxmox task through completion. Failed inventory requests stop creation; HTTP 5
 is never interpreted as absence. The provisioning page displays operation status
 and errors, and Operations opens on all history with a Failed filter. Local tests
 do not establish the cause of a particular production failure.
+
+
+Power-task results matching `WARNINGS: N` (positive integer) may proceed to
+observed-state verification. A start/reboot must still be running and a stop
+must be stopped before the operation succeeds. Warning summaries and task IDs
+are retained in the operation result and shown in Operations. Clone and delete
+tasks continue to require `OK`. Historical failed operations are not rewritten.
+VM deletion verifies cluster-wide absence before skipping Proxmox mutations;
+failed inventory requests never establish absence. The frontend image normalizes
+public static directories to 755 and files to 644 so nginx can read assets even
+when the builder inherits a restrictive umask.
