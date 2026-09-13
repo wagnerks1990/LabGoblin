@@ -5,6 +5,8 @@ releases begin, material changes are recorded in pull requests and this file.
 
 ## Unreleased
 
+- Fixed Proxmox 9 role creation by using VM.GuestAgent.Audit with capability-checked legacy fallback and privilege preflight.
+
 - Fixed Proxmox bootstrap on servers returning HTTP 500 for nonexistent roles or users by discovering identities through collection endpoints.
 
 - Re-enabled Proxmox root bootstrap as a one-time, secure-context workflow that

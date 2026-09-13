@@ -27,7 +27,14 @@ def _database():
 
 
 def _install_transport(monkeypatch, handler):
-    transport = httpx.MockTransport(handler)
+    def routed(request):
+        if request.url.path.endswith("/access/roles/Administrator"):
+            return httpx.Response(
+                200, json={"data": {p: 1 for p in SERVICE_PRIVILEGES}}
+            )
+        return handler(request)
+
+    transport = httpx.MockTransport(routed)
     real_client = httpx.AsyncClient
 
     def client_factory(**kwargs):
@@ -269,3 +276,34 @@ async def test_identity_discovery_fails_closed(monkeypatch, kind, status, data):
             True,
             {"ticket": "test", "csrf": "test"},
         )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("legacy", [False, True])
+async def test_role_uses_supported_guest_agent_privilege(monkeypatch, legacy):
+    available = set(SERVICE_PRIVILEGES)
+    assert "VM.GuestAgent.Audit" in available
+    assert "VM.Monitor" not in available
+    if legacy:
+        available.remove("VM.GuestAgent.Audit")
+        available.add("VM.Monitor")
+    posted = []
+
+    def handler(request):
+        if request.method == "GET" and request.url.path.endswith("/Administrator"):
+            return httpx.Response(200, json={"data": {p: 1 for p in available}})
+        if request.method == "GET":
+            return httpx.Response(200, json={"data": []})
+        posted.append(parse_qs(request.content.decode())["privs"][0].split())
+        return httpx.Response(200, json={"data": None})
+
+    real_client = httpx.AsyncClient
+    monkeypatch.setattr(
+        bootstrap_module.httpx,
+        "AsyncClient",
+        lambda **kw: real_client(transport=httpx.MockTransport(handler), **kw),
+    )
+    await ProxmoxBootstrapService(None)._ensure_service_role(
+        "https://pve.example.test/api2/json", True, {"ticket": "test", "csrf": "test"}
+    )
+    assert set(posted[0]) == available

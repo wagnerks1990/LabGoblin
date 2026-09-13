@@ -114,3 +114,5 @@ Passing source-contract tests does not prove browser layout or interaction.
   `docs/development/frontend-testing.md`
 
 Bootstrap discovers identity existence through successful role/user collection responses. Proxmox can return HTTP 500 for missing individual identities; never treat arbitrary HTTP 500 failures as absence. Discovery failures must stop setup.
+
+Bootstrap reads the built-in Administrator role only to discover supported privilege names. It prefers VM.GuestAgent.Audit, uses VM.Monitor only on older servers lacking that replacement, and refuses unsupported required privileges before creating objects. It never assigns Administrator.

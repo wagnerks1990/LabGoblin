@@ -34,7 +34,7 @@ The automatic role contains only these privileges:
 - `Pool.Allocate`, `Pool.Audit`
 - `SDN.Audit`, `SDN.Use`
 - `Sys.Audit`
-- `VM.Allocate`, `VM.Audit`, `VM.Clone`, `VM.Console`, `VM.Monitor`,
+- `VM.Allocate`, `VM.Audit`, `VM.Clone`, `VM.Console`, `VM.GuestAgent.Audit`,
   `VM.PowerMgmt`
 
 LabGoblin refuses to overwrite an existing `labgoblin@pve` user or an existing
@@ -67,3 +67,5 @@ Placement policy options are `manual` (requires an online default node),
 The Proxmox Setup page includes a Cluster Readiness panel with PASS/WARN/FAIL, eligible/excluded nodes, reasons, and recommended next steps.
 
 Bootstrap discovers identity existence through successful role/user collection responses. Proxmox can return HTTP 500 for missing individual identities; never treat arbitrary HTTP 500 failures as absence. Discovery failures must stop setup.
+
+Bootstrap reads the built-in Administrator role only to discover supported privilege names. It prefers VM.GuestAgent.Audit, uses VM.Monitor only on older servers lacking that replacement, and refuses unsupported required privileges before creating objects. It never assigns Administrator.
