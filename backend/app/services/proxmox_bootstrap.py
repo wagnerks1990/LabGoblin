@@ -25,7 +25,7 @@ SERVICE_PRIVILEGES = frozenset(
         "VM.Audit",
         "VM.Clone",
         "VM.Console",
-        "VM.Monitor",
+        "VM.GuestAgent.Audit",
         "VM.PowerMgmt",
     }
 )
@@ -188,6 +188,28 @@ class ProxmoxBootstrapService:
                 not isinstance(row, dict) or "roleid" not in row for row in rows
             ):
                 raise ProxmoxBootstrapError("Invalid Proxmox role discovery response")
+            supported_response = await client.get(
+                f"{api_url}/access/roles/Administrator"
+            )
+            supported_response.raise_for_status()
+            supported = supported_response.json().get("data")
+            if not isinstance(supported, dict):
+                raise ProxmoxBootstrapError(
+                    "Invalid Proxmox privilege discovery response"
+                )
+            available = {
+                key for key, value in supported.items() if value in (1, True, "1")
+            }
+            privileges = set(SERVICE_PRIVILEGES)
+            if "VM.GuestAgent.Audit" not in available and "VM.Monitor" in available:
+                privileges.remove("VM.GuestAgent.Audit")
+                privileges.add("VM.Monitor")
+            missing = privileges - available
+            if missing:
+                raise ProxmoxBootstrapError(
+                    "Proxmox does not support required privileges: "
+                    + ", ".join(sorted(missing))
+                )
             if any(row["roleid"] == SERVICE_ROLE for row in rows):
                 existing = await client.get(role_path)
                 existing.raise_for_status()
@@ -195,7 +217,7 @@ class ProxmoxBootstrapService:
                 actual = {
                     key for key, enabled in data.items() if enabled in (1, True, "1")
                 }
-                if actual != SERVICE_PRIVILEGES:
+                if actual != privileges:
                     raise ProxmoxBootstrapError(
                         f"Existing {SERVICE_ROLE} has unexpected privileges; refusing to modify it"
                     )
@@ -204,7 +226,7 @@ class ProxmoxBootstrapService:
                 f"{api_url}/access/roles",
                 data={
                     "roleid": SERVICE_ROLE,
-                    "privs": " ".join(sorted(SERVICE_PRIVILEGES)),
+                    "privs": " ".join(sorted(privileges)),
                 },
             )
             created.raise_for_status()
