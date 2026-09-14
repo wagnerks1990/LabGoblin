@@ -34,7 +34,7 @@ export default function StudentHomePage({ user }) {
     if (!pending.length) return undefined
     const timer = setTimeout(async () => {
       for (const [key,job] of pending) {
-        try { const row = (await api.get(`/operations/${job.id}`)).data; if (active) setJobs(old => ({...old,[key]:{id:job.id,state:row.state,error:row.error}})) }
+        try { const row = (await api.get(`/operations/${job.id}`)).data; if (active) { setJobs(old => ({...old,[key]:{id:job.id,state:row.state,error:row.error,warnings:row.result?.warnings || []}})); if (row.state === 'succeeded') setMessages(old => ({...old,[key]:'Preparation completed.'})); if (row.state === 'failed') setMessages(old => ({...old,[key]:'Preparation failed. Review the operation details or contact your instructor.'})) } }
         catch (err) { if (active) { setMessages(old => ({...old,[key]:detail(err)})); setJobs(old => ({...old})) } }
       }
       if (active) load(true)
@@ -71,10 +71,11 @@ export default function StudentHomePage({ user }) {
         const working = busy[row.id] || (job?.id && !['succeeded','warning','failed','cancelled'].includes(job.state))
         return <article className='student-machine' key={row.id}>
           <h4>{row.template_name || 'Lab machine'}{assigned.length > 1 ? ` · Machine ${row.slot_index}` : ''}</h4>
-          <WorkflowStatus value={job?.state || vm?.status || (row.can_provision ? 'ready' : row.run_state || 'unavailable')}/>
+          <WorkflowStatus value={(job && job.state !== 'succeeded' ? job.state : null) || vm?.status || (row.can_provision ? 'ready' : row.run_state || 'unavailable')}/>
           {row.access_open && vm?.status === 'running' && !working ? <Link className='btn btn-connection' to={`/console/${vm.id}`}>Connect in browser</Link> : row.access_open && vm?.status === 'stopped' ? <button disabled={working} onClick={() => start(row,vm)}>{working ? 'Starting…' : 'Start machine'}</button> : row.can_provision ? <button disabled={working} onClick={() => start(row,null)}>{working ? 'Preparing…' : 'Start lab'}</button> : <p>{!row.access_open ? 'Your instructor will open access during the lab window.' : vm ? 'Your machine is not ready to connect yet.' : 'Machine information is not available yet.'}</p>}
           {messages[row.id] ? <p role='status'>{messages[row.id]}</p> : null}
           {job?.error ? <p className='msg error' role='alert'>{job.error}</p> : null}
+          {(job?.warnings || []).map((warning,index) => <p className='ui-alert ui-alert--warning' key={index}>Completed with warning: {warning.message}</p>)}
           {job ? <Link to='/operations'>View preparation progress</Link> : null}
           {row.access_open && vm ? <GuestCredentialReveal key={vm.id} vmId={vm.id}/> : null}
           {vm ? <details><summary>Machine details</summary><p>{vm.vm_name}</p><p>Address: {vm.assigned_ip || 'Not reported yet'}</p><Link to='/vms'>More machine actions</Link></details> : null}
