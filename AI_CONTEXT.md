@@ -178,3 +178,18 @@ Shared composition lives in `WorkspaceKit.jsx`; appearance in `workspace.css`;
 collection selection logic in `workspaceCollections.js`. Public branding stays
 at `/brand/labgoblin-icon.svg`. No API schema, backend authorization, database
 migration, or console transport was changed by this rebuild.
+
+## Browser connections (2026-09-14)
+
+- Bundled Apache guacd 1.6.0 plus official vendored JS client. Same-origin
+  LabGoblin cookie/origin/tenant/assignment-authenticated tunnel, no separate
+  Guacamole login. VNC bridges authenticated PVE WebSocket to private guacd TCP.
+- GUI inspects actual Proxmox OS, running state, VNC authentication, gateway,
+  approved RDP/SSH port and server identity, then opens the preferred available
+  method. Guest destination/profile approval remains GUI-only admin setup;
+  automatic trusted DHCP/IPAM reconciliation and guest-account provisioning are
+  not implemented. Do not claim arbitrary guest-agent addresses are trusted.
+- VMRemoteProfile migration 20260914_0017 follows 20260911_0016. Guest secrets
+  encrypted, write-only; RDP requires NLA/certificate pin, SSH a host-key pin.
+- Docs: docs/operations/consoles.md. Full guest sessions and browser viewports
+  require server validation; do not claim these were validated in Cloud.

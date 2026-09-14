@@ -1,9 +1,18 @@
 PROTOCOL_REGISTRY = {
-    "novnc": {"implemented": False, "message": "not implemented yet"},
-    "guacamole": {"implemented": False, "message": "not implemented yet"},
-    "rdp": {"implemented": True, "message": "rdp download flow available"},
+    "novnc": {"implemented": True, "message": "server-authenticated Proxmox console"},
+    "guacamole": {
+        "implemented": True,
+        "message": "bundled browser VNC, RDP and SSH gateway",
+    },
+    "rdp": {
+        "implemented": True,
+        "message": "browser RDP with a verified VM connection profile",
+    },
     "spice": {"implemented": False, "message": "spice is disabled"},
-    "web_terminal": {"implemented": True, "message": "web terminal scaffold available"},
+    "web_terminal": {
+        "implemented": True,
+        "message": "browser SSH with a verified VM connection profile",
+    },
 }
 
 

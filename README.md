@@ -245,3 +245,13 @@ do not establish the cause of a particular production failure.
 
 Power-task warnings remain visible without falsely failing a verified running VM.
 See [Proxmox operations guidance](docs/proxmox-setup-wizard.md) for the verification boundary.
+
+### Integrated browser connections
+
+The default deployment now includes Apache Guacamole. **Connect in browser**
+checks VM availability and opens Windows RDP, Linux SSH terminal, or Proxmox VNC
+in LabGoblin. VNC works without guest network setup. RDP/SSH guest services,
+identity and VM-specific credentials are prepared in the GUI; authoritative
+IPAM/account auto-provisioning is not implemented. See
+[Browser connections](docs/operations/consoles.md) for the exact readiness and
+security contract and post-update validation.

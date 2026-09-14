@@ -59,6 +59,11 @@ class Settings(BaseSettings):
     lab_vm_ssh_known_hosts: str | None = None
     lab_vm_ssh_private_key_path: str | None = None
 
+    guacd_host: str = "guacd"
+    guacd_port: int = Field(default=4822, ge=1, le=65535)
+    guacd_bridge_host: str = "api"
+    guacamole_allowed_networks: str = ""
+
     guacamole_internal_url: str | None = None
     guacamole_base_url: str = "/guacamole"
     guacamole_admin_user: str | None = None

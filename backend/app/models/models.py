@@ -251,6 +251,19 @@ class StudentVM(Base):
     deleted_at = Column(DateTime, nullable=True, index=True)
 
 
+class VMRemoteProfile(Base):
+    __tablename__ = "vm_remote_profiles"
+    vm_id = Column(Integer, ForeignKey("student_vms.id"), primary_key=True)
+    protocol = Column(String(8), nullable=False)
+    address = Column(String(64), nullable=False)
+    port = Column(Integer, nullable=False)
+    mac_address = Column(String(17), nullable=False)
+    server_identity = Column(Text, nullable=False)
+    encrypted_credentials = Column(Text, nullable=False)
+    enabled = Column(Boolean, nullable=False, default=True, server_default="true")
+    revision = Column(Integer, nullable=False, default=1, server_default="1")
+
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
     id = Column(Integer, primary_key=True)

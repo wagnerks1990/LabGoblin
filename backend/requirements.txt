@@ -15,3 +15,5 @@ asyncssh==2.24.0
 
 apscheduler==3.10.4
 redis==5.0.8
+
+websockets==17.1

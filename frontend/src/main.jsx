@@ -33,7 +33,7 @@ import './styles.css'
 import './workspace.css'
 import api from './services/api'
 
-const ConsolePage = React.lazy(() => import('./pages/ConsolePage'))
+const ConsolePage = React.lazy(() => import('./pages/ConnectVmPage'))
 
 function App() {
   const { user, setUser, loading, error: authError, refresh } = useAuth()
@@ -69,7 +69,7 @@ function App() {
     <Route path='/account/security' element={<AccountSecurityPage onChanged={refresh} setMessage={setMessage} />} />
     <Route path='/vms' element={<VmsPage setMessage={setMessage} />} />
     <Route path='/console/:id' element={<React.Suspense fallback={<div className='panel'>Loading console…</div>}><ConsolePage /></React.Suspense>} />
-    <Route path='/terminal/:id' element={<Navigate to='/vms' replace />} />
+    <Route path='/terminal/:id' element={<React.Suspense fallback={<div className='panel'>Loading terminal…</div>}><ConsolePage /></React.Suspense>} />
     <Route path='/create' element={<CreateVmPage setMessage={setMessage} />} />
     <Route path='/operations' element={<OperationsPage />} />
     <Route path='/classroom' element={<RequireCapability capability='tenantInstructor'><ClassroomPage setMessage={setMessage} /></RequireCapability>} />

@@ -23,8 +23,30 @@ services:
     volumes:
       - redis-data:/data
 
+  guacd:
+    image: guacamole/guacd:1.6.0
+    restart: unless-stopped
+    networks:
+      - console-private
+      - console-egress
+    environment:
+      GUACD_LOG_LEVEL: warning
+    healthcheck:
+      test: ["CMD", "/bin/sh", "-c", "nc -z 127.0.0.1 4822"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    init: true
+
   api:
     build: ./backend
+    networks:
+      - default
+      - console-private
     restart: unless-stopped
     environment: &backend-env
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-labgoblin}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-labgoblin}
@@ -45,6 +67,10 @@ services:
       PROXMOX_TOKEN_SECRET: ${PROXMOX_TOKEN_SECRET:-replace-in-gui}
       PROXMOX_VERIFY_SSL: ${PROXMOX_VERIFY_SSL:-true}
       PROXMOX_ALLOW_INSECURE_TLS: ${PROXMOX_ALLOW_INSECURE_TLS:-false}
+      GUACD_HOST: guacd
+      GUACD_PORT: "4822"
+      GUACD_BRIDGE_HOST: api
+      GUACAMOLE_ALLOWED_NETWORKS: ${GUACAMOLE_ALLOWED_NETWORKS:-}
       SSH_TERMINAL_ENABLED: ${SSH_TERMINAL_ENABLED:-false}
       UPDATER_TOKEN: ${UPDATER_TOKEN:?UPDATER_TOKEN is required}
       UPDATER_REPOSITORY: ${UPDATER_REPOSITORY:-https://github.com/wagnerks1990/labgoblin.git}
@@ -60,6 +86,8 @@ services:
     group_add:
       - "${UPDATER_GID:?UPDATER_GID is required}"
     depends_on:
+      guacd:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       redis:
@@ -119,4 +147,7 @@ volumes:
   redis-data:
 
 networks:
+  console-private:
+    internal: true
+  console-egress:
   cloudflare-edge:

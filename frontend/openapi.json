@@ -1459,6 +1459,64 @@
         "title": "ClassPatch",
         "type": "object"
       },
+      "ConnectionOptionsResponse": {
+        "properties": {
+          "can_configure": {
+            "title": "Can Configure",
+            "type": "boolean"
+          },
+          "hint": {
+            "title": "Hint",
+            "type": "string"
+          },
+          "native_rdp": {
+            "title": "Native Rdp",
+            "type": "boolean"
+          },
+          "operating_system": {
+            "title": "Operating System",
+            "type": "string"
+          },
+          "rdp": {
+            "title": "Rdp",
+            "type": "boolean"
+          },
+          "running": {
+            "title": "Running",
+            "type": "boolean"
+          },
+          "terminal": {
+            "title": "Terminal",
+            "type": "boolean"
+          },
+          "vm_id": {
+            "title": "Vm Id",
+            "type": "integer"
+          },
+          "vm_name": {
+            "title": "Vm Name",
+            "type": "string"
+          },
+          "vnc": {
+            "title": "Vnc",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "vm_id",
+          "vm_name",
+          "operating_system",
+          "running",
+          "vnc",
+          "terminal",
+          "rdp",
+          "native_rdp",
+          "can_configure",
+          "hint"
+        ],
+        "title": "ConnectionOptionsResponse",
+        "type": "object"
+      },
       "ConsoleLaunchResponse": {
         "properties": {
           "expires_at": {
@@ -3315,6 +3373,205 @@
           "warnings"
         ],
         "title": "ReconciliationSummary",
+        "type": "object"
+      },
+      "RemoteProbeRequest": {
+        "properties": {
+          "address": {
+            "maxLength": 64,
+            "title": "Address",
+            "type": "string"
+          },
+          "confirm_reserved_address": {
+            "title": "Confirm Reserved Address",
+            "type": "boolean"
+          },
+          "port": {
+            "maximum": 65535.0,
+            "minimum": 1.0,
+            "title": "Port",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "address",
+          "port",
+          "confirm_reserved_address"
+        ],
+        "title": "RemoteProbeRequest",
+        "type": "object"
+      },
+      "RemoteProbeResponse": {
+        "properties": {
+          "hint": {
+            "title": "Hint",
+            "type": "string"
+          },
+          "mac_addresses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Mac Addresses",
+            "type": "array"
+          },
+          "protocol": {
+            "title": "Protocol",
+            "type": "string"
+          },
+          "reachable": {
+            "title": "Reachable",
+            "type": "boolean"
+          },
+          "server_identity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Server Identity"
+          }
+        },
+        "required": [
+          "protocol",
+          "reachable",
+          "mac_addresses",
+          "hint"
+        ],
+        "title": "RemoteProbeResponse",
+        "type": "object"
+      },
+      "RemoteProfileRequest": {
+        "properties": {
+          "address": {
+            "maxLength": 64,
+            "title": "Address",
+            "type": "string"
+          },
+          "domain": {
+            "default": "",
+            "maxLength": 128,
+            "title": "Domain",
+            "type": "string"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "mac_address": {
+            "maxLength": 17,
+            "title": "Mac Address",
+            "type": "string"
+          },
+          "password": {
+            "format": "password",
+            "maxLength": 4096,
+            "title": "Password",
+            "type": "string",
+            "writeOnly": true
+          },
+          "port": {
+            "maximum": 65535.0,
+            "minimum": 1.0,
+            "title": "Port",
+            "type": "integer"
+          },
+          "server_identity": {
+            "maxLength": 8192,
+            "title": "Server Identity",
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 128,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "address",
+          "port",
+          "mac_address",
+          "server_identity",
+          "username",
+          "password"
+        ],
+        "title": "RemoteProfileRequest",
+        "type": "object"
+      },
+      "RemoteProfileResponse": {
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "enabled": {
+            "default": false,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "mac_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mac Address"
+          },
+          "port": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Port"
+          },
+          "protocol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protocol"
+          },
+          "server_identity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Server Identity"
+          }
+        },
+        "required": [
+          "configured"
+        ],
+        "title": "RemoteProfileResponse",
         "type": "object"
       },
       "RuntimeSummary": {
@@ -13042,6 +13299,264 @@
         "summary": "Console Novnc"
       }
     },
+    "/api/vms/{id}/console/options": {
+      "get": {
+        "operationId": "connection_options_api_vms__id__console_options_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionOptionsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Connection Options"
+      }
+    },
+    "/api/vms/{id}/console/probe": {
+      "post": {
+        "operationId": "probe_remote_profile_api_vms__id__console_probe_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoteProbeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteProbeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Probe Remote Profile"
+      }
+    },
+    "/api/vms/{id}/console/profile": {
+      "get": {
+        "operationId": "get_remote_profile_api_vms__id__console_profile_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteProfileResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Remote Profile"
+      },
+      "put": {
+        "operationId": "save_remote_profile_api_vms__id__console_profile_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoteProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteProfileResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Save Remote Profile"
+      }
+    },
     "/api/vms/{id}/console/rdp": {
       "get": {
         "operationId": "console_rdp_api_vms__id__console_rdp_get",
@@ -21947,6 +22462,264 @@
           }
         ],
         "summary": "Console Novnc"
+      }
+    },
+    "/v1/api/vms/{id}/console/options": {
+      "get": {
+        "operationId": "connection_options_v1_api_vms__id__console_options_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionOptionsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Connection Options"
+      }
+    },
+    "/v1/api/vms/{id}/console/probe": {
+      "post": {
+        "operationId": "probe_remote_profile_v1_api_vms__id__console_probe_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoteProbeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteProbeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Probe Remote Profile"
+      }
+    },
+    "/v1/api/vms/{id}/console/profile": {
+      "get": {
+        "operationId": "get_remote_profile_v1_api_vms__id__console_profile_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteProfileResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Remote Profile"
+      },
+      "put": {
+        "operationId": "save_remote_profile_v1_api_vms__id__console_profile_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoteProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoteProfileResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Save Remote Profile"
       }
     },
     "/v1/api/vms/{id}/console/rdp": {

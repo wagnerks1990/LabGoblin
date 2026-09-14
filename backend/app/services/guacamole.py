@@ -1,26 +1,32 @@
-import httpx
+import asyncio
 
 from app.core.config import settings
+from app.services.guacd_protocol import InstructionReader, encode_instruction
 
 
 def guacamole_configured() -> bool:
-    return bool(
-        settings.guacamole_internal_url
-        and settings.guacamole_base_url
-        and settings.guacamole_admin_user
-        and settings.guacamole_admin_password
-    )
+    return bool(settings.guacd_host and settings.guacd_port)
 
 
 async def check_guacamole_reachable(timeout: float = 2.5) -> tuple[bool, str | None]:
-    url = settings.guacamole_internal_url.rstrip("/") + "/"
+    writer = None
     try:
-        async with httpx.AsyncClient(
-            timeout=timeout, verify=settings.guacamole_verify_ssl
-        ) as c:
-            r = await c.get(url)
-        if r.status_code < 500:
-            return True, None
-        return False, f"HTTP {r.status_code}"
-    except Exception as exc:
-        return False, str(exc)
+        async with asyncio.timeout(timeout):
+            reader, writer = await asyncio.open_connection(
+                settings.guacd_host, settings.guacd_port
+            )
+            writer.write(encode_instruction("select", "vnc").encode())
+            await writer.drain()
+            instruction = await InstructionReader(reader).read()
+            if instruction[0] == "args":
+                return True, None
+            return False, "Gateway did not accept VNC"
+    except Exception:
+        return False, "Private Guacamole gateway is unavailable"
+    finally:
+        if writer:
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except OSError:
+                pass

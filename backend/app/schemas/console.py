@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, SecretStr
 
 
 class ConsoleLaunchResponse(BaseModel):
@@ -17,3 +17,51 @@ class ConsoleLaunchResponse(BaseModel):
     reconnect_token: str | None = None
     heartbeat_interval_seconds: int | None = None
     expires_at: int | None = None
+
+
+class ConnectionOptionsResponse(BaseModel):
+    vm_id: int
+    vm_name: str
+    operating_system: str
+    running: bool
+    vnc: bool
+    terminal: bool
+    rdp: bool
+    native_rdp: bool
+    can_configure: bool
+    hint: str
+
+
+class RemoteProfileRequest(BaseModel):
+    address: str = Field(max_length=64)
+    port: int = Field(ge=1, le=65535)
+    mac_address: str = Field(max_length=17)
+    server_identity: str = Field(max_length=8192)
+    username: str = Field(max_length=128)
+    password: SecretStr = Field(max_length=4096)
+    domain: str = Field(default="", max_length=128)
+    enabled: bool = True
+
+
+class RemoteProfileResponse(BaseModel):
+    configured: bool
+    protocol: str | None = None
+    address: str | None = None
+    port: int | None = None
+    mac_address: str | None = None
+    server_identity: str | None = None
+    enabled: bool = False
+
+
+class RemoteProbeRequest(BaseModel):
+    address: str = Field(max_length=64)
+    port: int = Field(ge=1, le=65535)
+    confirm_reserved_address: bool
+
+
+class RemoteProbeResponse(BaseModel):
+    protocol: str
+    reachable: bool
+    server_identity: str | None = None
+    mac_addresses: list[str]
+    hint: str

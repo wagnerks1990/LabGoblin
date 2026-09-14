@@ -8,7 +8,6 @@ import { selectMachines } from '../state/workspaceCollections'
 import api from '../services/api'
 
 const terminalStates = new Set(['succeeded', 'failed', 'cancelled'])
-const protocols = vm => (vm.access_protocols || '').split(',').map(value => value.trim().toLowerCase())
 const errorDetail = error => {
   const detail = error?.response?.data?.detail
   return typeof detail === 'string' ? detail : JSON.stringify(detail || error?.message || 'Action failed')
@@ -73,29 +72,6 @@ export default function VmsPage({ setMessage }) {
     }
   }
 
-  const launch = async (vm, protocol) => {
-    setBusy(previous => ({ ...previous, [vm.id]: protocol }))
-    try {
-      if (protocol === 'rdp') {
-        const response = await api.get(`/vms/${vm.id}/console/rdp`)
-        const blob = new Blob([response.data.rdp_file || ''], { type: 'application/rdp' })
-        const link = document.createElement('a')
-        link.href = URL.createObjectURL(blob)
-        link.download = `vm-${vm.vmid}.rdp`
-        link.click()
-        URL.revokeObjectURL(link.href)
-        return
-      }
-      const response = await api.get(`/vms/${vm.id}/console/novnc`)
-      if (!response.data?.launch_url) throw new Error('Console launch URL was not returned')
-      window.open(response.data.launch_url, '_blank', 'noopener,noreferrer')
-    } catch (requestError) {
-      setMessage({ type: 'error', text: errorDetail(requestError) })
-    } finally {
-      setBusy(previous => ({ ...previous, [vm.id]: null }))
-    }
-  }
-
   const visible = selectMachines(vms, { query, status: statusFilter, sort })
 
   if (loading) return <LoadingState label='Loading your virtual machines…' />
@@ -117,9 +93,6 @@ export default function VmsPage({ setMessage }) {
         const missing = ['missing', 'error'].includes(state)
         const running = state === 'running'
         const stopped = state === 'stopped'
-        const allowed = protocols(vm)
-        const canConsole = !missing && vm.allowed_console !== false && vm.console_enabled && allowed.includes('novnc')
-        const canRdp = !missing && vm.allowed_rdp !== false && vm.rdp_enabled && allowed.includes('rdp')
         const working = Boolean(busy[vm.id])
         return <article className='panel resource-card' key={vm.id} aria-busy={working}>
           <div className='panel-head'>
@@ -129,10 +102,9 @@ export default function VmsPage({ setMessage }) {
           <div className='resource-facts'><span>VMID <strong>{vm.vmid}</strong></span><span>Node <strong>{vm.proxmox_node || 'Not assigned'}</strong></span><span>Address <strong>{vm.assigned_ip || vm.hostname || 'Not reported'}</strong></span></div>
           {working ? <p className='muted' role='status'>{busy[vm.id] === 'status' ? 'Refreshing status…' : `${busy[vm.id]} in progress…`}</p> : null}
           {missing ? <p className='msg error'>This VM is unavailable. Refresh its status or ask an instructor for help.</p> : null}
-          {running && canConsole ? <button type='button' className='btn-connection' disabled={working} onClick={() => launch(vm, 'console')}>Open console</button>
-            : running && canRdp ? <button type='button' className='btn-connection' disabled={working} onClick={() => launch(vm, 'rdp')}>Download RDP connection</button>
-              : stopped ? <button type='button' disabled={working} onClick={() => act(vm, 'start')}>Start VM</button>
-                : <p className='muted'>A connection will be available when this VM is running.</p>}
+          {running ? <Link className='btn btn-connection' to={`/console/${vm.id}`}>Connect in browser</Link>
+            : stopped ? <button type='button' disabled={working} onClick={() => act(vm, 'start')}>Start VM</button>
+              : <p className='muted'>A connection will be available when this VM is running.</p>}
           <details style={{ marginTop: 14 }}>
             <summary>More actions and details</summary>
             <dl>
@@ -145,7 +117,6 @@ export default function VmsPage({ setMessage }) {
               {!running && !missing && !stopped ? <button type='button' disabled={working} onClick={() => act(vm, 'start')}>Start</button> : null}
               {running && vm.allowed_stop !== false ? <button type='button' disabled={working} onClick={() => act(vm, 'stop')}>Stop</button> : null}
               {running ? <button type='button' disabled={working} onClick={() => act(vm, 'reboot')}>Reboot</button> : null}
-              {running && canConsole && canRdp ? <button type='button' disabled={working} onClick={() => launch(vm, 'rdp')}>Download RDP</button> : null}
             </div>
             {vm.allowed_delete !== false ? <details style={{ marginTop: 12 }}>
               <summary>Delete this VM</summary>

@@ -2346,6 +2346,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/vms/{id}/console/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Connection Options */
+        get: operations["connection_options_api_vms__id__console_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vms/{id}/console/probe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Probe Remote Profile */
+        post: operations["probe_remote_profile_api_vms__id__console_probe_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vms/{id}/console/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Remote Profile */
+        get: operations["get_remote_profile_api_vms__id__console_profile_get"];
+        /** Save Remote Profile */
+        put: operations["save_remote_profile_api_vms__id__console_profile_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/vms/{id}/console/rdp": {
         parameters: {
             query?: never;
@@ -4824,6 +4876,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/api/vms/{id}/console/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Connection Options */
+        get: operations["connection_options_v1_api_vms__id__console_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/api/vms/{id}/console/probe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Probe Remote Profile */
+        post: operations["probe_remote_profile_v1_api_vms__id__console_probe_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/api/vms/{id}/console/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Remote Profile */
+        get: operations["get_remote_profile_v1_api_vms__id__console_profile_get"];
+        /** Save Remote Profile */
+        put: operations["save_remote_profile_v1_api_vms__id__console_profile_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/api/vms/{id}/console/rdp": {
         parameters: {
             query?: never;
@@ -5417,6 +5521,29 @@ export interface components {
             /** Term */
             term?: string | null;
         };
+        /** ConnectionOptionsResponse */
+        ConnectionOptionsResponse: {
+            /** Can Configure */
+            can_configure: boolean;
+            /** Hint */
+            hint: string;
+            /** Native Rdp */
+            native_rdp: boolean;
+            /** Operating System */
+            operating_system: string;
+            /** Rdp */
+            rdp: boolean;
+            /** Running */
+            running: boolean;
+            /** Terminal */
+            terminal: boolean;
+            /** Vm Id */
+            vm_id: number;
+            /** Vm Name */
+            vm_name: string;
+            /** Vnc */
+            vnc: boolean;
+        };
         /** ConsoleLaunchResponse */
         ConsoleLaunchResponse: {
             /** Expires At */
@@ -5994,6 +6121,76 @@ export interface components {
             stale_sessions: number;
             /** Warnings */
             warnings: number;
+        };
+        /** RemoteProbeRequest */
+        RemoteProbeRequest: {
+            /** Address */
+            address: string;
+            /** Confirm Reserved Address */
+            confirm_reserved_address: boolean;
+            /** Port */
+            port: number;
+        };
+        /** RemoteProbeResponse */
+        RemoteProbeResponse: {
+            /** Hint */
+            hint: string;
+            /** Mac Addresses */
+            mac_addresses: string[];
+            /** Protocol */
+            protocol: string;
+            /** Reachable */
+            reachable: boolean;
+            /** Server Identity */
+            server_identity?: string | null;
+        };
+        /** RemoteProfileRequest */
+        RemoteProfileRequest: {
+            /** Address */
+            address: string;
+            /**
+             * Domain
+             * @default
+             */
+            domain: string;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /** Mac Address */
+            mac_address: string;
+            /**
+             * Password
+             * Format: password
+             */
+            password: string;
+            /** Port */
+            port: number;
+            /** Server Identity */
+            server_identity: string;
+            /** Username */
+            username: string;
+        };
+        /** RemoteProfileResponse */
+        RemoteProfileResponse: {
+            /** Address */
+            address?: string | null;
+            /** Configured */
+            configured: boolean;
+            /**
+             * Enabled
+             * @default false
+             */
+            enabled: boolean;
+            /** Mac Address */
+            mac_address?: string | null;
+            /** Port */
+            port?: number | null;
+            /** Protocol */
+            protocol?: string | null;
+            /** Server Identity */
+            server_identity?: string | null;
         };
         /** RuntimeSummary */
         RuntimeSummary: {
@@ -11642,6 +11839,146 @@ export interface operations {
             };
         };
     };
+    connection_options_api_vms__id__console_options_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionOptionsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    probe_remote_profile_api_vms__id__console_probe_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoteProbeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteProbeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_remote_profile_api_vms__id__console_profile_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_remote_profile_api_vms__id__console_profile_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoteProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     console_rdp_api_vms__id__console_rdp_get: {
         parameters: {
             query?: never;
@@ -17156,6 +17493,146 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConsoleLaunchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connection_options_v1_api_vms__id__console_options_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionOptionsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    probe_remote_profile_v1_api_vms__id__console_probe_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoteProbeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteProbeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_remote_profile_v1_api_vms__id__console_profile_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_remote_profile_v1_api_vms__id__console_profile_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoteProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteProfileResponse"];
                 };
             };
             /** @description Validation Error */

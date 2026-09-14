@@ -23,9 +23,10 @@ test('unsupported SPICE launch controls are not exposed', () => {
   assert.doesNotMatch(sources, /console\/spice|>SPICE</)
 })
 
-test('noVNC uses the normalized backend launch URL contract', () => {
+test('VM connections navigate internally without delayed browser popups', () => {
   const source = readFileSync(new URL('../src/pages/VmsPage.jsx', import.meta.url), 'utf8')
-  assert.match(source, /data\?\.launch_url/)
+  assert.match(source, /to=\{`\/console\/\$\{vm.id\}`\}/)
+  assert.doesNotMatch(source, /window.open/)
   assert.doesNotMatch(source, /data\?\.novnc_url/)
 })
 

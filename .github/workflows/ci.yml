@@ -148,6 +148,8 @@ jobs:
       - run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml config --quiet
       - run: sudo mkdir -p /run/labgoblin-updater
       - run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml up -d --build
+      - name: Verify bundled Guacamole protocol support
+        run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml exec -T api python < backend/scripts/check_guacd.py
       - name: Wait for readiness
         run: |
           for attempt in $(seq 1 60); do

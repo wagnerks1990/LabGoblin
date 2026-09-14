@@ -5,6 +5,13 @@ releases begin, material changes are recorded in pull requests and this file.
 
 ## Unreleased
 
+- Bundle a private Guacamole gateway and an integrated browser connection page.
+  Validate VM state, Proxmox VNC authentication and approved RDP/SSH service
+  identities, then automatically open the best available authorized method.
+  Preserve tenant, assignment and live-session authorization. Guest RDP/SSH
+  profiles currently require administrator preparation in the GUI; unattended
+  guest account provisioning is not included.
+
 - Expanded the LabGoblin GUI with a branded overview and sign-in, role-aware page
   finder, searchable VM/template collections, card/list layouts, provisioning
   review, operation warning/failure filters, pool editor disclosure, classroom
