@@ -39,7 +39,7 @@ The installer validates the operating system, generates separate bootstrap secre
 
 Bootstrap secrets are stored in a root-readable `.env` file. Operational settings remain in PostgreSQL. Back up both the database and `.env`; losing the encryption key can make stored credentials unrecoverable.
 
-The current Compose stack contains the web application, API service with embedded scheduler and leased durable workers, PostgreSQL, and Redis. Guacamole, a separately scaled worker service, TLS automation, and an AI gateway are planned components and are not silently installed by the current script.
+The current Compose stack contains the web application, API service with embedded scheduler and leased durable workers, PostgreSQL, Redis, and the bundled private Guacamole guacd service. No separate Guacamole web application or database is required. A separately scaled worker service, general TLS automation, and an AI gateway remain planned components. See [browser connections](consoles.md) for guest preparation and network boundaries.
 
 An optional `cloudflare` Compose profile adds the `cloudflared` connector. The
 host-only `deploy/configure-cloudflare.sh` helper supports `enable`, `disable`,

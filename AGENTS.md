@@ -175,3 +175,13 @@
 - Configuration belongs in the database when it is operational state. Bootstrap secrets belong in a secret store or protected environment file.
 - OpenAPI is the frontend/backend contract. Do not hand-code a second incompatible client contract.
 - Documentation and migration changes ship in the same pull request as the behavior they describe.
+
+## VM observations and browser connection maintenance
+
+- Read `docs/operations/consoles.md` and `docs/backend-architecture.md` before changing console or observation paths.
+- Resource and agent IP/MAC observations are transient API data, not approved destinations. Never write discovery into `assigned_ip`, approve profiles automatically, or send credentials based on a guest assertion.
+- Preserve authorization before Proxmox observation, bounded concurrency/deadlines and explicit partial-failure warnings. Missing values must not become zero or healthy state.
+- Keep allocated disk capacity separate from filesystem used/free space and cumulative I/O separate from rates.
+- The current default broker is bundled Guacamole guacd, not a planned future feature. SPICE is unsupported and the legacy SSH pilot remains disabled.
+- Preserve platform-admin destination approval, pinned guest identity, template/VM login encryption, lab flags and periodic session revalidation. Template login sharing is only the audited reveal exception above.
+- Keep independent connection method hints and the preparation panel before the console; test enabled service, policy denial and identity failure separately.

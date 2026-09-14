@@ -156,3 +156,18 @@ role and tenant boundaries, enrollment availability, wizard validation, and the
 production frontend build. Browser visual/keyboard validation at 320, 390, 768,
 1024, and 1440 CSS pixels remains a required deployment check; no live browser
 or Proxmox classroom result is claimed from these local tests.
+
+## VM observations and connection guidance
+
+`VmResources.jsx` is shared by VM cards, student machine details and connection
+details. Formatting lives in `vmResources.js`; zero is distinct from missing
+values, sizes use binary units, IPs wrap, and observed IPs participate in search.
+The student home suppresses overlapping refreshes. VM details use application
+VM ids and the normal authorized API, not direct Proxmox calls.
+
+`ConnectVmPage.jsx` displays per-method `method_hints`, places guest preparation
+above VNC, preserves the saved service port, and reselects the preferred verified
+method after saving. Only the server's `can_configure` capability exposes the
+platform-admin preparation form. Backend authorization remains authoritative.
+Connected/connecting badges use success/pending states. The canonical setup and
+limits are in [browser connections](operations/consoles.md).

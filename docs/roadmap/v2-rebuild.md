@@ -61,7 +61,8 @@ and an end-to-end test completes the lifecycle against the lab cluster.
 Status: in progress. Class, roster, blueprint, scheduled run, explicit
 assignment, per-student slot quota, student assignment view, and server-side
 schedule/access enforcement are implemented. Bulk power operations and verified
-expiration cleanup are implemented. CSV roster import, extension, snapshot,
+expiration cleanup, an editable five-step setup wizard, and the student My labs
+home are implemented. CSV roster import, extension, snapshot,
 reset, and rebuild remain.
 
 - class, enrollment, lab blueprint, lab run, and assignment models (implemented);
@@ -76,11 +77,15 @@ all students remain correctly isolated.
 
 ## Phase 4: console and sessions
 
-Status: partial. Same-origin server-brokered noVNC and key-based SSH terminal
-routes are implemented without tickets or JWTs in URLs. Per-assignment keys,
-Guacamole, rotation, reconnect testing, and live browser acceptance remain.
+Status: implemented in code for the pilot, pending live acceptance. Bundled
+guacd and the official Guacamole browser client support Proxmox VNC, Windows
+RDP and Linux SSH. VM-bound destination/identity approval, encrypted template
+logins or VM overrides, periodic session/profile revalidation, and per-method
+diagnostics are implemented. Automatic trusted IPAM/account provisioning,
+per-assignment credential generation/rotation and live reconnect/revocation
+acceptance remain. Guest-agent discovery alone does not approve a destination.
 
-- Compose-managed Guacamole and guacd;
+- Compose-managed guacd with the LabGoblin session broker (implemented);
 - short-lived server-side launch grants;
 - RDP, SSH, and VNC policy enforcement;
 - session heartbeat, disconnect, expiry, and reconnect;

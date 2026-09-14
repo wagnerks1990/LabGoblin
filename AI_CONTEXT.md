@@ -237,3 +237,12 @@ or Proxmox classroom result is claimed from these local tests.
 ## VM observations and connection diagnostics
 
 VM list/status responses include typed, transient resources and observed_addresses. Guest agent observations never overwrite assigned_ip or remote profiles. All collection probes are authorized first, concurrency-limited and time-bounded. Partial failures return warnings, not fabricated zeroes. RDP/SSH requires the existing approved destination, pinned identity, encrypted login and live lab policy. Connection method_hints are independent so VNC cannot hide an RDP failure.
+
+Documentation map: the versioned wiki is `docs/` with navigation in `mkdocs.yml`.
+`docs/operations/consoles.md` is the console/setup contract;
+`docs/backend-architecture.md` describes transient observation fields and bounds;
+`docs/user-guide/` explains teacher/student actions; `docs/operations/preproduction-acceptance.md`
+keeps live infrastructure gates separate from automated evidence. `AGENTS.md` and
+`.github/copilot-instructions.md` repeat the observation-versus-approval boundary.
+Do not revive stale descriptions of Guacamole as planned, SPICE as supported,
+or the disabled legacy SSH pilot as the primary terminal.

@@ -1,5 +1,10 @@
 # Changelog
 
+## Documentation synchronization
+
+- Align the versioned wiki, deployment/backend architecture, roadmap, acceptance gates, user guides and AI/Copilot instructions with bundled Guacamole, editable lab setup and VM observations.
+- Clarify live-test limitations and preserve guest destination approval and credential boundaries.
+
 ## VM resource visibility and guest connection guidance
 
 - Show vCPU allocation, CPU use, allocated/reported memory, per-disk capacity, uptime, I/O totals and agent IP/MAC addresses on machines and lab details.

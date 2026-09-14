@@ -39,3 +39,23 @@ administrators and owners can manage all tenant classes. Account creation still
 requires the platform administrator role. Saving a setup does not prove live
 hypervisor capacity or RDP/SSH/VNC connectivity; those are checked by provisioning
 and connection workflows.
+
+## Prepare browser access and inspect resources
+
+The wizard's browser-method checkboxes permit access; they do not configure
+Windows Remote Desktop or Linux SSH. A platform administrator opens the VM's
+**Connect in browser → Administrator: prepare guest access** panel above VNC,
+confirms the reserved address, detects the guest service on its actual port,
+verifies its server identity and approves the login. Template credentials may
+be reused when automatic connections are enabled in template settings. After
+saving, LabGoblin rechecks and selects the preferred available method.
+
+Students cannot perform destination approval. If a method is blocked by lab
+policy, edit the lab's access settings; if setup, service or identity is the
+blocker, follow [browser connection preparation](../operations/consoles.md).
+Guest-agent IP discovery is informational and does not grant connection authority.
+
+Use **My machines** or a machine's details to inspect allocated CPU/memory/disk,
+usage, uptime and IP/MAC observations. I/O is cumulative and disk capacity is
+not filesystem free space. Failed/partial refreshes show warnings; refresh the
+individual VM before relying on its displayed information.
