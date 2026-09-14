@@ -180,6 +180,24 @@ class ProxmoxClient:
             r.raise_for_status()
             return r.json()
 
+    async def get_vm_config(self, node: str, vmid: int):
+        async with httpx.AsyncClient(verify=self.verify_ssl, timeout=15) as client:
+            response = await client.get(
+                f"{self.base_url}/nodes/{node}/qemu/{vmid}/config", headers=self.headers
+            )
+            response.raise_for_status()
+            return response.json().get("data", {})
+
+    async def get_terminal_ticket(self, node: str, vmid: int):
+        async with httpx.AsyncClient(verify=self.verify_ssl, timeout=15) as client:
+            response = await client.post(
+                f"{self.base_url}/nodes/{node}/qemu/{vmid}/termproxy",
+                headers=self.headers,
+                data={"serial": "serial0"},
+            )
+            response.raise_for_status()
+            return response.json().get("data", {})
+
     async def get_novnc_ticket(self, node: str, vmid: int):
         async with httpx.AsyncClient(verify=self.verify_ssl, timeout=30) as client:
             r = await client.post(

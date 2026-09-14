@@ -13,7 +13,8 @@ from app.services.console_access import get_console_vm_for_user
 from app.services.organization_access import resolve_organization_context
 from app.services.proxmox import ProxmoxClient
 from app.db.tx import safe_commit
-from app.architecture.async_retry import async_retry_with_backoff
+from app.services.rfb_auth import authenticate_browser
+from app.services.remote_capabilities import inspect_console
 from app.services.session_service import SessionService
 
 
@@ -54,13 +55,20 @@ class ConsoleWsService:
                 organization = resolve_organization_context(
                     self.db, current_user, organization_id
                 )
-                get_console_vm_for_user(
+                current_vm = get_console_vm_for_user(
                     self.db,
                     user=current_user,
                     vm_id=vm.id,
                     organization=organization,
                     operation=operation,
                 )
+                flag = {
+                    "console": "console_enabled",
+                    "terminal": "ssh_enabled",
+                    "rdp": "rdp_enabled",
+                }.get(operation)
+                if flag and not getattr(current_vm, flag, False):
+                    raise HTTPException(403, "Connection disabled")
             except HTTPException:
                 await websocket.close(code=1008, reason="Console access revoked")
                 return
@@ -189,112 +197,189 @@ class ConsoleWsService:
         finally:
             svc.mark_disconnected(session.id)
 
-    async def novnc_ws(
-        self,
-        websocket: WebSocket,
-        user: User,
-        vm: StudentVM,
-        *,
-        auth_token: str,
-        organization_id: int,
-    ):
-        proxmox = ProxmoxClient(cluster_id=vm.proxmox_cluster_id)
-        if not vm.console_enabled:
-            await websocket.close(code=1008, reason="Console disabled for VM")
-            return
-
-        async def _ticket():
-            return await proxmox.get_novnc_ticket(vm.proxmox_node, vm.vmid)
-
-        rr = await async_retry_with_backoff(_ticket, max_attempts=3)
-        if not rr.ok:
-            await websocket.close(code=1011, reason="Failed to get noVNC ticket")
-            return
-        ticket_data = rr.value
-        port = ticket_data.get("port")
-        ticket = ticket_data.get("ticket")
-        if not port or not ticket:
-            await websocket.close(code=1011, reason="Failed to get noVNC ticket")
-            return
-        await websocket.accept()
-        self.db.add(
-            AuditLog(
-                organization_id=vm.organization_id,
-                actor_id=user.id,
-                action="novnc_ws_launch",
-                target_type="student_vm",
-                target_id=str(vm.vmid),
-            )
-        )
-        safe_commit(self.db)
-        svc = SessionService(self.db)
-        launch = svc.create_launch(user, vm, "NOVNC_WS", "success", str(vm.vmid))
-        session = svc.create_launching_session(
-            user, vm, "NOVNC_WS", connection_launch_id=launch.id
-        )
-        safe_commit(self.db)
-        svc.mark_active(session.id)
-        svc.heartbeat(session.id)
-        query = urlencode({"port": port, "vncticket": ticket})
-        path = f"/api2/json/nodes/{vm.proxmox_node}/qemu/{vm.vmid}/vncwebsocket?{query}"
-        base = proxmox.base_url.replace("/api2/json", "")
-        ws_url = base.replace("https://", "wss://").replace("http://", "ws://") + path
-        ssl_context = None
-        if ws_url.startswith("wss://"):
-            ssl_context = ssl.create_default_context()
-            if not proxmox.verify_ssl:
-                ssl_context.check_hostname = False
-                ssl_context.verify_mode = ssl.CERT_NONE
+    async def _run_pumps(self, *coroutines):
+        tasks = {asyncio.create_task(coroutine) for coroutine in coroutines}
         try:
-            async with websockets.connect(ws_url, ssl=ssl_context) as pmx:
+            done, _pending = await asyncio.wait(
+                tasks, return_when=asyncio.FIRST_COMPLETED
+            )
+            for task in done:
+                task.result()
+        finally:
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
 
-                async def c2p():
-                    while True:
-                        message = await websocket.receive()
-                        if message.get("bytes") is not None:
-                            await pmx.send(message["bytes"])
-                        elif message.get("text") is not None:
-                            await pmx.send(message["text"])
+    async def novnc_ws(self, websocket, user, vm, *, auth_token, organization_id):
+        await self._proxmox_ws(websocket, user, vm, auth_token, organization_id, False)
 
-                async def p2c():
+    async def serial_ws(self, websocket, user, vm, *, auth_token, organization_id):
+        await self._proxmox_ws(websocket, user, vm, auth_token, organization_id, True)
+
+    async def _proxmox_ws(
+        self, websocket, user, vm, auth_token, organization_id, serial
+    ):
+        import json
+
+        service = SessionService(self.db)
+        session = None
+        failed = False
+        operation = "terminal" if serial else "console"
+        protocol = "SERIAL_WS" if serial else "NOVNC_WS"
+        await websocket.accept()
+        try:
+            proxmox = ProxmoxClient(cluster_id=vm.proxmox_cluster_id)
+            capability = await inspect_console(self.db, vm, proxmox)
+            if not capability["terminal" if serial else "vnc"]:
+                await websocket.close(
+                    code=1008,
+                    reason="Connection unavailable; check VM connection options",
+                )
+                return
+            ticket_data = await (
+                proxmox.get_terminal_ticket(vm.proxmox_node, vm.vmid)
+                if serial
+                else proxmox.get_novnc_ticket(vm.proxmox_node, vm.vmid)
+            )
+            if not ticket_data.get("port") or not ticket_data.get("ticket"):
+                raise ValueError("Console ticket unavailable")
+            query = urlencode(
+                {"port": ticket_data["port"], "vncticket": ticket_data["ticket"]}
+            )
+            base = proxmox.base_url.rstrip("/")
+            ws_url = base.replace("https://", "wss://", 1).replace(
+                "http://", "ws://", 1
+            )
+            ws_url += f"/nodes/{vm.proxmox_node}/qemu/{vm.vmid}/vncwebsocket?{query}"
+            context = None
+            if ws_url.startswith("wss://"):
+                context = ssl.create_default_context()
+                if not proxmox.verify_ssl:
+                    context.check_hostname = False
+                    context.verify_mode = ssl.CERT_NONE
+            self.db.add(
+                AuditLog(
+                    organization_id=vm.organization_id,
+                    actor_id=user.id,
+                    action=f"{operation}_ws_launch",
+                    target_type="student_vm",
+                    target_id=str(vm.id),
+                )
+            )
+            launch = service.create_launch(user, vm, protocol, "launching")
+            session = service.create_launching_session(
+                user, vm, protocol, connection_launch_id=launch.id
+            )
+            safe_commit(self.db)
+            async with websockets.connect(
+                ws_url,
+                ssl=context,
+                additional_headers=proxmox.headers,
+                open_timeout=15,
+                max_size=4194304,
+                max_queue=16,
+            ) as upstream:
+                if serial:
+                    username, ticket = (
+                        ticket_data.get("user", ""),
+                        ticket_data["ticket"],
+                    )
+                    if not username or any(c in username + ticket for c in "\r\n"):
+                        raise ValueError("Invalid terminal ticket")
+                    await upstream.send(f"{username}:{ticket}\n")
+                    async with asyncio.timeout(15):
+                        answer = await upstream.recv()
+                    if answer not in ("OK", b"OK"):
+                        raise ValueError("Terminal authentication rejected")
+                    await websocket.send_json({"type": "ready"})
+                else:
+                    await authenticate_browser(websocket, upstream, ticket_data)
+                launch.status = "success"
+                service.mark_active(session.id)
+                service.heartbeat(session.id)
+
+                async def from_browser():
                     while True:
-                        data = await pmx.recv()
-                        if isinstance(data, str):
-                            await websocket.send_text(data)
+                        if serial:
+                            message = await websocket.receive_text()
+                            if len(message) > 65536:
+                                raise ValueError("Terminal input too large")
+                            event = json.loads(message)
+                            if event.get("type") == "input" and isinstance(
+                                event.get("data"), str
+                            ):
+                                data = event["data"]
+                                await upstream.send(f"0:{len(data.encode())}:{data}")
+                            elif event.get("type") == "resize":
+                                cols, rows = int(event["cols"]), int(event["rows"])
+                                if not (2 <= cols <= 500 and 2 <= rows <= 200):
+                                    raise ValueError("Invalid terminal dimensions")
+                                await upstream.send(f"1:{cols}:{rows}:")
+                            else:
+                                raise ValueError("Invalid terminal input")
                         else:
-                            await websocket.send_bytes(data)
+                            await upstream.send(await websocket.receive_bytes())
 
-                t1 = asyncio.create_task(c2p())
-                t2 = asyncio.create_task(p2c())
-                watchdog = asyncio.create_task(
+                async def to_browser():
+                    import codecs
+
+                    decoder = codecs.getincrementaldecoder("utf-8")("replace")
+                    async for data in upstream:
+                        if serial:
+                            output = (
+                                decoder.decode(data)
+                                if isinstance(data, bytes)
+                                else data
+                            )
+                            await websocket.send_json(
+                                {"type": "output", "data": output}
+                            )
+                        elif isinstance(data, bytes):
+                            await websocket.send_bytes(data)
+                        else:
+                            raise ValueError("Invalid graphical console data")
+
+                async def keepalive():
+                    while True:
+                        await asyncio.sleep(20)
+                        if serial:
+                            await upstream.send("2")
+
+                await self._run_pumps(
+                    from_browser(),
+                    to_browser(),
+                    keepalive(),
                     self._watch_session_access(
                         websocket,
-                        svc,
+                        service,
                         session.id,
                         user,
                         vm,
-                        "console",
+                        operation,
                         auth_token,
                         organization_id,
-                    )
+                    ),
                 )
-                _done, pending = await asyncio.wait(
-                    {t1, t2, watchdog}, return_when=asyncio.FIRST_COMPLETED
-                )
-                for t in pending:
-                    t.cancel()
-        except WebSocketDisconnect:
-            svc.mark_disconnected(session.id)
-            return
+        except (WebSocketDisconnect, websockets.exceptions.ConnectionClosedOK):
+            pass
         except Exception:
-            try:
-                svc.mark_failed(session.id, "noVNC proxy failed")
-            except Exception:
-                pass
-            try:
-                await websocket.send_text("ERROR: noVNC proxy failed")
-                await websocket.close(code=1011)
-            except Exception:
-                return
+            failed = True
+            if session:
+                service.mark_failed(session.id, "Remote console connection failed")
+            # Never return upstream exceptions: their request URLs contain tickets.
         finally:
-            svc.mark_disconnected(session.id)
+            if session:
+                if not service.mark_disconnected(session.id):
+                    service.mark_failed(
+                        session.id,
+                        "Connection ended before the remote session became active",
+                    )
+            try:
+                await websocket.close(
+                    code=1011 if failed else 1000,
+                    reason="Connection failed; check connection prerequisites"
+                    if failed
+                    else "Session closed",
+                )
+            except (RuntimeError, WebSocketDisconnect):
+                pass

@@ -1659,6 +1659,26 @@ export interface paths {
         patch: operations["patch_template_api_admin_templates__id__patch"];
         trace?: never;
     };
+    "/api/admin/templates/{id}/guest-credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Guest Credential Status */
+        get: operations["guest_credential_status_api_admin_templates__id__guest_credentials_get"];
+        /** Save Guest Credentials */
+        put: operations["save_guest_credentials_api_admin_templates__id__guest_credentials_put"];
+        post?: never;
+        /** Remove Guest Credentials */
+        delete: operations["remove_guest_credentials_api_admin_templates__id__guest_credentials_delete"];
+        options?: never;
+        head?: never;
+        /** Change Guest Credential Policy */
+        patch: operations["change_guest_credential_policy_api_admin_templates__id__guest_credentials_patch"];
+        trace?: never;
+    };
     "/api/admin/troubleshooting/recent": {
         parameters: {
             query?: never;
@@ -2346,6 +2366,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/vms/{id}/console/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Connection Options */
+        get: operations["connection_options_api_vms__id__console_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vms/{id}/console/probe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Probe Remote Profile */
+        post: operations["probe_remote_profile_api_vms__id__console_probe_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vms/{id}/console/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Remote Profile */
+        get: operations["get_remote_profile_api_vms__id__console_profile_get"];
+        /** Save Remote Profile */
+        put: operations["save_remote_profile_api_vms__id__console_profile_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/vms/{id}/console/rdp": {
         parameters: {
             query?: never;
@@ -2408,6 +2480,23 @@ export interface paths {
         get: operations["delete_vm_preview_api_vms__id__delete_preview_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vms/{id}/guest-credentials/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reveal Guest Credentials */
+        post: operations["reveal_guest_credentials_api_vms__id__guest_credentials_reveal_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4137,6 +4226,26 @@ export interface paths {
         patch: operations["patch_template_v1_api_admin_templates__id__patch"];
         trace?: never;
     };
+    "/v1/api/admin/templates/{id}/guest-credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Guest Credential Status */
+        get: operations["guest_credential_status_v1_api_admin_templates__id__guest_credentials_get"];
+        /** Save Guest Credentials */
+        put: operations["save_guest_credentials_v1_api_admin_templates__id__guest_credentials_put"];
+        post?: never;
+        /** Remove Guest Credentials */
+        delete: operations["remove_guest_credentials_v1_api_admin_templates__id__guest_credentials_delete"];
+        options?: never;
+        head?: never;
+        /** Change Guest Credential Policy */
+        patch: operations["change_guest_credential_policy_v1_api_admin_templates__id__guest_credentials_patch"];
+        trace?: never;
+    };
     "/v1/api/admin/troubleshooting/recent": {
         parameters: {
             query?: never;
@@ -4824,6 +4933,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/api/vms/{id}/console/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Connection Options */
+        get: operations["connection_options_v1_api_vms__id__console_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/api/vms/{id}/console/probe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Probe Remote Profile */
+        post: operations["probe_remote_profile_v1_api_vms__id__console_probe_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/api/vms/{id}/console/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Remote Profile */
+        get: operations["get_remote_profile_v1_api_vms__id__console_profile_get"];
+        /** Save Remote Profile */
+        put: operations["save_remote_profile_v1_api_vms__id__console_profile_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/api/vms/{id}/console/rdp": {
         parameters: {
             query?: never;
@@ -4886,6 +5047,23 @@ export interface paths {
         get: operations["delete_vm_preview_v1_api_vms__id__delete_preview_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/api/vms/{id}/guest-credentials/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reveal Guest Credentials */
+        post: operations["reveal_guest_credentials_v1_api_vms__id__guest_credentials_reveal_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5417,6 +5595,29 @@ export interface components {
             /** Term */
             term?: string | null;
         };
+        /** ConnectionOptionsResponse */
+        ConnectionOptionsResponse: {
+            /** Can Configure */
+            can_configure: boolean;
+            /** Hint */
+            hint: string;
+            /** Native Rdp */
+            native_rdp: boolean;
+            /** Operating System */
+            operating_system: string;
+            /** Rdp */
+            rdp: boolean;
+            /** Running */
+            running: boolean;
+            /** Terminal */
+            terminal: boolean;
+            /** Vm Id */
+            vm_id: number;
+            /** Vm Name */
+            vm_name: string;
+            /** Vnc */
+            vnc: boolean;
+        };
         /** ConsoleLaunchResponse */
         ConsoleLaunchResponse: {
             /** Expires At */
@@ -5491,6 +5692,29 @@ export interface components {
             role?: string | null;
             /** User Id */
             user_id: number;
+        };
+        /** GuestAddressObservation */
+        GuestAddressObservation: {
+            /** Address */
+            address: string;
+            /** Mac Address */
+            mac_address: string;
+            /** Matches Cloud Init */
+            matches_cloud_init: boolean;
+        };
+        /** GuestCredentialReveal */
+        GuestCredentialReveal: {
+            /** Domain */
+            domain: string;
+            /** Password */
+            password: string;
+            /**
+             * Source
+             * @default template
+             */
+            source: string;
+            /** Username */
+            username: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -5995,6 +6219,99 @@ export interface components {
             /** Warnings */
             warnings: number;
         };
+        /** RemoteProbeRequest */
+        RemoteProbeRequest: {
+            /** Address */
+            address: string;
+            /** Confirm Reserved Address */
+            confirm_reserved_address: boolean;
+            /** Port */
+            port: number;
+        };
+        /** RemoteProbeResponse */
+        RemoteProbeResponse: {
+            /** Hint */
+            hint: string;
+            /** Mac Addresses */
+            mac_addresses: string[];
+            /** Protocol */
+            protocol: string;
+            /** Reachable */
+            reachable: boolean;
+            /** Server Identity */
+            server_identity?: string | null;
+        };
+        /** RemoteProfileRequest */
+        RemoteProfileRequest: {
+            /** Address */
+            address: string;
+            /**
+             * Domain
+             * @default
+             */
+            domain: string;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /** Mac Address */
+            mac_address: string;
+            /**
+             * Password
+             * Format: password
+             * @default
+             */
+            password: string;
+            /** Port */
+            port: number;
+            /** Server Identity */
+            server_identity: string;
+            /**
+             * Use Template Credentials
+             * @default false
+             */
+            use_template_credentials: boolean;
+            /**
+             * Username
+             * @default
+             */
+            username: string;
+        };
+        /** RemoteProfileResponse */
+        RemoteProfileResponse: {
+            /** Address */
+            address?: string | null;
+            /** Configured */
+            configured: boolean;
+            /** Discovery Hint */
+            discovery_hint?: string | null;
+            /**
+             * Enabled
+             * @default false
+             */
+            enabled: boolean;
+            /** Mac Address */
+            mac_address?: string | null;
+            /** Observed Addresses */
+            observed_addresses?: components["schemas"]["GuestAddressObservation"][];
+            /** Port */
+            port?: number | null;
+            /** Protocol */
+            protocol?: string | null;
+            /** Server Identity */
+            server_identity?: string | null;
+            /**
+             * Template Credentials Available
+             * @default false
+             */
+            template_credentials_available: boolean;
+            /**
+             * Use Template Credentials
+             * @default false
+             */
+            use_template_credentials: boolean;
+        };
         /** RuntimeSummary */
         RuntimeSummary: {
             /** Db Status */
@@ -6161,6 +6478,47 @@ export interface components {
             proxmox_node: string;
             /** Source Vmid */
             source_vmid: number;
+        };
+        /** TemplateCredentialPolicy */
+        TemplateCredentialPolicy: {
+            /** Auto Connect */
+            auto_connect: boolean;
+            /** Student Visible */
+            student_visible: boolean;
+        };
+        /** TemplateCredentialStatus */
+        TemplateCredentialStatus: {
+            /** Auto Connect */
+            auto_connect: boolean;
+            /** Configured */
+            configured: boolean;
+            /** Student Visible */
+            student_visible: boolean;
+        };
+        /** TemplateCredentialWrite */
+        TemplateCredentialWrite: {
+            /**
+             * Auto Connect
+             * @default true
+             */
+            auto_connect: boolean;
+            /**
+             * Domain
+             * @default
+             */
+            domain: string;
+            /**
+             * Password
+             * Format: password
+             */
+            password: string;
+            /**
+             * Student Visible
+             * @default false
+             */
+            student_visible: boolean;
+            /** Username */
+            username: string;
         };
         /** TemplateResponse */
         TemplateResponse: {
@@ -10191,6 +10549,146 @@ export interface operations {
             };
         };
     };
+    guest_credential_status_api_admin_templates__id__guest_credentials_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateCredentialStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_guest_credentials_api_admin_templates__id__guest_credentials_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateCredentialWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateCredentialStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_guest_credentials_api_admin_templates__id__guest_credentials_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateCredentialStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_guest_credential_policy_api_admin_templates__id__guest_credentials_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateCredentialPolicy"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateCredentialStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     recent_issues_api_admin_troubleshooting_recent_get: {
         parameters: {
             query?: never;
@@ -11642,6 +12140,146 @@ export interface operations {
             };
         };
     };
+    connection_options_api_vms__id__console_options_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionOptionsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    probe_remote_profile_api_vms__id__console_probe_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoteProbeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteProbeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_remote_profile_api_vms__id__console_profile_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_remote_profile_api_vms__id__console_profile_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoteProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     console_rdp_api_vms__id__console_rdp_get: {
         parameters: {
             query?: never;
@@ -11761,6 +12399,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reveal_guest_credentials_api_vms__id__guest_credentials_reveal_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuestCredentialReveal"];
                 };
             };
             /** @description Validation Error */
@@ -15718,6 +16389,146 @@ export interface operations {
             };
         };
     };
+    guest_credential_status_v1_api_admin_templates__id__guest_credentials_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateCredentialStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_guest_credentials_v1_api_admin_templates__id__guest_credentials_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateCredentialWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateCredentialStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_guest_credentials_v1_api_admin_templates__id__guest_credentials_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateCredentialStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_guest_credential_policy_v1_api_admin_templates__id__guest_credentials_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateCredentialPolicy"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateCredentialStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     recent_issues_v1_api_admin_troubleshooting_recent_get: {
         parameters: {
             query?: never;
@@ -17169,6 +17980,146 @@ export interface operations {
             };
         };
     };
+    connection_options_v1_api_vms__id__console_options_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionOptionsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    probe_remote_profile_v1_api_vms__id__console_probe_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoteProbeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteProbeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_remote_profile_v1_api_vms__id__console_profile_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_remote_profile_v1_api_vms__id__console_profile_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoteProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RemoteProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     console_rdp_v1_api_vms__id__console_rdp_get: {
         parameters: {
             query?: never;
@@ -17288,6 +18239,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reveal_guest_credentials_v1_api_vms__id__guest_credentials_reveal_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuestCredentialReveal"];
                 };
             };
             /** @description Validation Error */

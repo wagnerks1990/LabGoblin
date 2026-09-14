@@ -114,7 +114,8 @@ interchangeable.
   states through the deployed proxy.
 - Proxmox tickets, JWTs, credentials, private keys, and reusable passwords are
   absent from URLs, storage, responses, diagnostics, and screenshots.
-- SSH terminal controls remain hidden while the feature is disabled.
+- SSH terminal controls remain unavailable until authorized guest profile and
+  service checks pass. The legacy SSH pilot remains disabled.
 
 ## September 2026 workspace rebuild evidence
 

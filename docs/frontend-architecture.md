@@ -95,8 +95,9 @@ confirmation contract.
   and reusable grants may not.
 - Proxmox and console tickets never appear in browser URLs or frontend state.
 - Cookie-authenticated mutations and WebSockets remain same-origin.
-- The SSH terminal control remains absent unless the server explicitly enables
-  the hardened feature.
+- The connection page enables Guacamole SSH only after VM, assignment, guest
+  profile and server-identity checks pass. The legacy SSH pilot remains disabled.
+  See [Browser connections](operations/consoles.md) for the integrated gateway.
 
 ## Testing layers
 

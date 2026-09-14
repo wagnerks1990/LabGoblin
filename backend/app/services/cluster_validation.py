@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 from app.services.guacamole import check_guacamole_reachable, guacamole_configured
 
 
@@ -14,7 +16,11 @@ def _check(category, name, status, message, details=None, fix_hint=None):
 
 async def run_validation(db):
     checks = []
-    nodes = db.execute("SELECT COUNT(*) FROM proxmox_nodes").scalar() if db.bind else 0
+    nodes = (
+        db.execute(text("SELECT COUNT(*) FROM proxmox_nodes")).scalar()
+        if db.bind
+        else 0
+    )
     checks.append(
         _check(
             "nodes",
@@ -30,19 +36,21 @@ async def run_validation(db):
             "guacamole",
             "Guacamole reachable",
             "pass" if reachable else "error",
-            "Guacamole API reachable" if reachable else f"Guacamole unreachable: {err}",
-            fix_hint="Check guacamole container and nginx /guacamole/ proxy",
+            "Private Guacamole gateway reachable"
+            if reachable
+            else f"Guacamole unreachable: {err}",
+            fix_hint="Check the bundled guacd service health in the LabGoblin deployment.",
         )
     )
     checks.append(
         _check(
             "guacamole",
-            "Guacamole credentials configured",
+            "Guacamole gateway configured",
             "pass" if guacamole_configured() else "error",
-            "Service credentials configured"
+            "Bundled gateway configured; no separate Guacamole login required"
             if guacamole_configured()
-            else "Missing GUACAMOLE_ADMIN_USER/PASSWORD",
-            fix_hint="Set backend env vars for service credentials",
+            else "Missing private gateway address",
+            fix_hint="Restore the bundled guacd service configuration.",
         )
     )
     errors = sum(1 for c in checks if c["status"] == "error")

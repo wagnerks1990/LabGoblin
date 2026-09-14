@@ -138,3 +138,91 @@ async def novnc_ws(id: int, websocket: WebSocket, db: Session = Depends(get_db))
         auth_token=token,
         organization_id=organization.id,
     )
+
+
+@router.websocket("/vms/{id}/console/serial/ws")
+async def serial_ws(id: int, websocket: WebSocket, db: Session = Depends(get_db)):
+    if not cloudflare_tunnel_host_allowed(websocket.headers):
+        await websocket.close(code=1008, reason="Invalid Host header")
+        return
+    try:
+        await require_cloudflare_access(websocket.headers)
+    except CloudflareAccessInvalid:
+        await websocket.close(code=1008, reason="Cloudflare Access required")
+        return
+    except (CloudflareAccessUnavailable, ValueError):
+        await websocket.close(code=1013, reason="Cloudflare Access unavailable")
+        return
+    if not websocket_origin_allowed(websocket):
+        await websocket.close(code=1008, reason="Untrusted origin")
+        return
+    token = websocket.cookies.get(settings.auth_cookie_name)
+    user = _get_user_from_ws_token(db, token)
+    if not user:
+        await websocket.close(code=1008, reason="Invalid token")
+        return
+    requested = websocket.query_params.get("organization_id")
+    try:
+        organization = resolve_organization_context(
+            db, user, int(requested) if requested else None
+        )
+    except (ValueError, HTTPException):
+        await websocket.close(code=1008, reason="Invalid organization")
+        return
+    vm = _get_vm_for_user(db, user, id, organization, "terminal")
+    if not vm:
+        await websocket.close(code=1008, reason="Forbidden")
+        return
+    await ConsoleWsService(db).serial_ws(
+        websocket,
+        user,
+        vm,
+        auth_token=token,
+        organization_id=organization.id,
+    )
+
+
+@router.websocket("/vms/{id}/console/guacamole/{protocol}/ws")
+async def guacamole_ws(
+    id: int, protocol: str, websocket: WebSocket, db: Session = Depends(get_db)
+):
+    if not cloudflare_tunnel_host_allowed(websocket.headers):
+        await websocket.close(code=1008, reason="Invalid Host header")
+        return
+    try:
+        await require_cloudflare_access(websocket.headers)
+    except CloudflareAccessInvalid:
+        await websocket.close(code=1008, reason="Cloudflare Access required")
+        return
+    except (CloudflareAccessUnavailable, ValueError):
+        await websocket.close(code=1013, reason="Cloudflare Access unavailable")
+        return
+    if not websocket_origin_allowed(websocket):
+        await websocket.close(code=1008, reason="Untrusted origin")
+        return
+    token = websocket.cookies.get(settings.auth_cookie_name)
+    user = _get_user_from_ws_token(db, token)
+    if not user:
+        await websocket.close(code=1008, reason="Invalid token")
+        return
+    requested = websocket.query_params.get("organization_id")
+    try:
+        organization = resolve_organization_context(
+            db, user, int(requested) if requested else None
+        )
+    except (ValueError, HTTPException):
+        await websocket.close(code=1008, reason="Invalid organization")
+        return
+    operation = {"vnc": "console", "rdp": "rdp", "ssh": "terminal"}.get(protocol)
+    if not operation or "guacamole" not in websocket.scope.get("subprotocols", []):
+        await websocket.close(code=1008, reason="Unsupported connection method")
+        return
+    vm = _get_vm_for_user(db, user, id, organization, operation)
+    if not vm:
+        await websocket.close(code=1008, reason="Forbidden")
+        return
+    from app.services.guacamole_console import GuacamoleConsole
+
+    await GuacamoleConsole(db).connect(
+        websocket, user, vm, protocol, token, organization.id
+    )

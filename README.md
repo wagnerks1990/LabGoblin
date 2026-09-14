@@ -1,5 +1,8 @@
 # LabGoblin
 
+Template guest logins can now be encrypted in template settings, inherited for automatic browser connections, and explicitly shared with authorized students through an audited, temporary reveal. See [console access](docs/operations/consoles.md).
+
+
 **Virtual Lab Provisioning & Management**  
 **Real Skills. Virtual Machines.**
 
@@ -245,3 +248,17 @@ do not establish the cause of a particular production failure.
 
 Power-task warnings remain visible without falsely failing a verified running VM.
 See [Proxmox operations guidance](docs/proxmox-setup-wizard.md) for the verification boundary.
+
+### Integrated browser connections
+
+The default deployment now includes Apache Guacamole. **Connect in browser**
+checks VM availability and opens Windows RDP, Linux SSH terminal, or Proxmox VNC
+in LabGoblin. VNC works without guest network setup. RDP/SSH guest services,
+identity and VM-specific credentials are prepared in the GUI; authoritative
+IPAM/account auto-provisioning is not implemented. See
+[Browser connections](docs/operations/consoles.md) for the exact readiness and
+security contract and post-update validation.
+
+Guest setup now discovers current QEMU-agent addresses through Proxmox, matches
+VM adapters, and labels static cloud-init matches. It does not recover guest
+passwords or silently replace approved destinations.

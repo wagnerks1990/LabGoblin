@@ -312,8 +312,8 @@ async def create_vm(
         vmid=vmid,
         proxmox_node=selected_node,
         status="provisioning",
-        operating_system="linux",
-        access_protocols="novnc,ssh",
+        operating_system=None,
+        access_protocols="novnc",
     )
     db.add(vm)
     db.flush()

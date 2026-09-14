@@ -1,9 +1,23 @@
 # Changelog
 
+Template guest logins can now be encrypted in template settings, inherited for automatic browser connections, and explicitly shared with authorized students through an audited, temporary reveal. See [console access](docs/operations/consoles.md).
+
+
 LabGoblin has not published a supported production release. Until versioned
 releases begin, material changes are recorded in pull requests and this file.
 
 ## Unreleased
+
+- Discover current guest-agent addresses for GUI connection preparation, match
+  Proxmox adapters, distinguish static cloud-init matches, and report agent failure
+  without silently using stale addresses or recovering/resetting guest passwords.
+
+- Bundle a private Guacamole gateway and an integrated browser connection page.
+  Validate VM state, Proxmox VNC authentication and approved RDP/SSH service
+  identities, then automatically open the best available authorized method.
+  Preserve tenant, assignment and live-session authorization. Guest RDP/SSH
+  profiles currently require administrator preparation in the GUI; unattended
+  guest account provisioning is not included.
 
 - Expanded the LabGoblin GUI with a branded overview and sign-in, role-aware page
   finder, searchable VM/template collections, card/list layouts, provisioning

@@ -205,6 +205,17 @@ class VMTemplate(Base):
     enabled = Column(Boolean, default=True)
 
 
+class TemplateGuestCredential(Base):
+    __tablename__ = "template_guest_credentials"
+    template_id = Column(Integer, ForeignKey("vm_templates.id"), primary_key=True)
+    encrypted_credentials = Column(Text, nullable=False)
+    auto_connect = Column(Boolean, nullable=False, default=True, server_default="true")
+    student_visible = Column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    revision = Column(Integer, nullable=False, default=1, server_default="1")
+
+
 class Permission(Base):
     __tablename__ = "permissions"
     __table_args__ = (
@@ -249,6 +260,19 @@ class StudentVM(Base):
     ssh_port = Column(Integer, default=22)
     created_at = Column(DateTime, server_default=func.now())
     deleted_at = Column(DateTime, nullable=True, index=True)
+
+
+class VMRemoteProfile(Base):
+    __tablename__ = "vm_remote_profiles"
+    vm_id = Column(Integer, ForeignKey("student_vms.id"), primary_key=True)
+    protocol = Column(String(8), nullable=False)
+    address = Column(String(64), nullable=False)
+    port = Column(Integer, nullable=False)
+    mac_address = Column(String(17), nullable=False)
+    server_identity = Column(Text, nullable=False)
+    encrypted_credentials = Column(Text, nullable=False)
+    enabled = Column(Boolean, nullable=False, default=True, server_default="true")
+    revision = Column(Integer, nullable=False, default=1, server_default="1")
 
 
 class AuditLog(Base):
