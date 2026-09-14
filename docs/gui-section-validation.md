@@ -160,3 +160,7 @@ role and tenant boundaries, enrollment availability, wizard validation, and the
 production frontend build. Browser visual/keyboard validation at 320, 390, 768,
 1024, and 1440 CSS pixels remains a required deployment check; no live browser
 or Proxmox classroom result is claimed from these local tests.
+
+### VM observations follow-up
+
+Check cards/list, student machine details and connection details at the documented widths. Verify missing agent/configuration states, multiple disks/IPs, RDP setup before VNC, custom port retention, template credential reuse, and automatic method selection after save. Automated checks cover formatting, discovery isolation and connection policy. Live Windows/Linux sessions and browser viewport checks remain deployment validation.

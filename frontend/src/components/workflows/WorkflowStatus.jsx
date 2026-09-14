@@ -1,6 +1,6 @@
-const successful = new Set(['running', 'succeeded', 'completed', 'verified', 'active', 'ready'])
+const successful = new Set(['running', 'succeeded', 'completed', 'verified', 'active', 'ready', 'connected'])
 const neutral = new Set(['stopped', 'closed', 'cancelled', 'ended', 'disabled', 'draft'])
-const pending = new Set(['pending', 'queued', 'running', 'provisioning', 'creating', 'syncing', 'warning', 'maintenance', 'scheduled'])
+const pending = new Set(['pending', 'queued', 'running', 'provisioning', 'creating', 'syncing', 'warning', 'maintenance', 'scheduled', 'connecting'])
 
 export default function WorkflowStatus({ value }) {
   const status = String(value || 'unknown').toLowerCase()

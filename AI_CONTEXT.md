@@ -233,3 +233,7 @@ role and tenant boundaries, enrollment availability, wizard validation, and the
 production frontend build. Browser visual/keyboard validation at 320, 390, 768,
 1024, and 1440 CSS pixels remains a required deployment check; no live browser
 or Proxmox classroom result is claimed from these local tests.
+
+## VM observations and connection diagnostics
+
+VM list/status responses include typed, transient resources and observed_addresses. Guest agent observations never overwrite assigned_ip or remote profiles. All collection probes are authorized first, concurrency-limited and time-bounded. Partial failures return warnings, not fabricated zeroes. RDP/SSH requires the existing approved destination, pinned identity, encrypted login and live lab policy. Connection method_hints are independent so VNC cannot hide an RDP failure.

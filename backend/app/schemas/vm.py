@@ -1,5 +1,6 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from app.schemas.console import GuestAddressObservation
 
 
 class TemplateResponse(BaseModel):
@@ -31,6 +32,25 @@ class CreateVMRequest(BaseModel):
     assignment_id: int | None = None
 
 
+class VMDisk(BaseModel):
+    device: str
+    capacity_bytes: int | None = None
+
+
+class VMResources(BaseModel):
+    cpu_count: int | None = None
+    cpu_usage_percent: float | None = None
+    memory_bytes: int | None = None
+    memory_used_bytes: int | None = None
+    disk_capacity_bytes: int | None = None
+    disks: list[VMDisk] = Field(default_factory=list)
+    uptime_seconds: int | None = None
+    network_received_bytes: int | None = None
+    network_sent_bytes: int | None = None
+    disk_read_bytes: int | None = None
+    disk_written_bytes: int | None = None
+
+
 class VMResponse(BaseModel):
     id: int
     vm_name: str
@@ -47,6 +67,11 @@ class VMResponse(BaseModel):
     default_username: str | None = None
     assigned_ip: str | None = None
     hostname: str | None = None
+    resources: VMResources | None = None
+    observed_addresses: list[GuestAddressObservation] = Field(default_factory=list)
+    observed_at: datetime | None = None
+    resource_warning: str | None = None
+    discovery_hint: str | None = None
     ssh_username: str | None = None
     ssh_auth_method: str | None = None
     ssh_port: int | None = 22

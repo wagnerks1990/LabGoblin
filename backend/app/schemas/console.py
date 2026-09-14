@@ -30,6 +30,7 @@ class ConnectionOptionsResponse(BaseModel):
     native_rdp: bool
     can_configure: bool
     hint: str
+    method_hints: dict[str, str] = Field(default_factory=dict)
 
 
 class RemoteProfileRequest(BaseModel):

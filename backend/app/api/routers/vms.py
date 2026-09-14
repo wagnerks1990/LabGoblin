@@ -1,4 +1,6 @@
+import asyncio
 from datetime import datetime
+from app.services.vm_observations import observe_vm
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -133,14 +135,33 @@ async def list_vms(
             vm.assignment_expires_at = assignment.expires_at
             visible.append(vm)
         rows = visible
-    for vm in rows:
-        try:
-            data = await ProxmoxClient(vm.proxmox_cluster_id).get_vm_status(
-                vm.proxmox_node, vm.vmid
-            )
-            vm.status = data.get("status", vm.status)
-        except Exception:
-            vm.status = vm.status or "error"
+    # Limit concurrent hypervisor/agent traffic and bound the whole list check.
+    semaphore = asyncio.Semaphore(4)
+
+    async def refresh(vm):
+        vm.resource_warning = "Live VM details were not refreshed."
+        async with semaphore:
+            try:
+                proxmox = ProxmoxClient(vm.proxmox_cluster_id)
+                async with asyncio.timeout(8):
+                    data = await proxmox.get_vm_status(vm.proxmox_node, vm.vmid)
+                vm.status = data.get("status", vm.status)
+                await observe_vm(proxmox, vm, data)
+            except asyncio.CancelledError:
+                vm.resource_warning = (
+                    "The live details check timed out. Refresh this VM to try again."
+                )
+                raise
+            except Exception as exc:
+                if _is_not_found(exc):
+                    vm.status = "missing"
+                vm.resource_warning = "Live VM details are unavailable. Refresh or ask an administrator to check Proxmox connectivity."
+
+    try:
+        async with asyncio.timeout(20):
+            await asyncio.gather(*(refresh(vm) for vm in rows))
+    except TimeoutError:
+        pass  # Unrefreshed rows retain their explicit warning, not invented data.
     db.commit()
     return rows
 
@@ -431,11 +452,11 @@ async def refresh_vm_status(
 ):
     vm = _get_vm_for_user(db, user, id, organization, "view")
     try:
-        vm.status = (
-            await ProxmoxClient(vm.proxmox_cluster_id).get_vm_status(
-                vm.proxmox_node, vm.vmid
-            )
-        ).get("status", vm.status)
+        proxmox = ProxmoxClient(vm.proxmox_cluster_id)
+        async with asyncio.timeout(8):
+            data = await proxmox.get_vm_status(vm.proxmox_node, vm.vmid)
+        vm.status = data.get("status", vm.status)
+        await observe_vm(proxmox, vm, data)
     except Exception as exc:
         if _is_not_found(exc):
             vm.status = "missing"

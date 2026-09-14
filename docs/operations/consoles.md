@@ -54,7 +54,7 @@ A port being open does not prove authentication or authorization will succeed.
 A platform administrator can prepare a guest entirely in the connection GUI:
 
 1. Open the VM's browser connection page. VNC can be used for guest setup.
-2. Expand **Administrator: prepare guest access**. LabGoblin reads current
+2. Use **Administrator: prepare guest access** above the console (opened automatically when guest access is unavailable). LabGoblin reads current
    QEMU guest-agent interfaces through the VM-bound Proxmox API, matches their
    MAC addresses to the hypervisor adapters, and filters invalid/local addresses.
    A single candidate is prefilled; multiple candidates remain an explicit GUI
@@ -63,7 +63,7 @@ A platform administrator can prepare a guest entirely in the connection GUI:
    profiles are retained without silently changing their destinations.
    Verify a DHCP/IPAM reservation for this exact VM; matching guest-reported MACs
    alone is not proof of ownership. Discovery sends no credentials to guest IPs.
-3. Confirm the reserved address and select **Detect guest service**. LabGoblin
+3. Confirm the reserved address, verify the guest service port (custom ports are supported), and select **Detect guest service**. LabGoblin
    detects RDP/NLA and its certificate or SSH and its host key; no credentials
    are transmitted during this probe.
 4. Verify the displayed identity against the guest, select its Proxmox network
@@ -165,3 +165,31 @@ by VM/template lists. This explicit sharing feature does not expose Proxmox,
 gateway, infrastructure SSH credentials, private keys, or VM-specific overrides.
 Shared template accounts are shared across clones; use separate template accounts
 or VM overrides where separate guest identities are required.
+
+## Resource visibility and unavailable connections
+
+**My machines**, student **Machine details**, and the connection page's
+**VM resources and IP addresses** show live VM observations. The API reads only
+authorized VMs, limits concurrent checks to four, and caps each list refresh at
+20 seconds. Rows not refreshed show a warning; use that VM's Refresh action.
+The student home avoids overlapping refresh requests.
+
+- vCPUs and allocated memory come from VM configuration; CPU use, reported memory
+  use and uptime come from Proxmox status. These are hypervisor observations,
+  not a guarantee of guest application memory use.
+- Disk capacity sums attached virtual data/system disks with known sizes. CD-ROM,
+  cloud-init, EFI and unused disks are excluded. Unknown sizes remain unknown;
+  capacity is not filesystem used/free space.
+- Network and disk I/O are cumulative byte counts, not instantaneous rates.
+- IP/MAC observations come from the QEMU agent matched to Proxmox VM adapters.
+  Missing agent data gets an explanation. Saved addresses remain labeled as such.
+  Observations never replace approved connection destinations or authorize logins.
+
+Each connection method now reports its own blocker: setup incomplete, disabled
+profile, lab policy, guest service/identity failure, stopped VM, or gateway failure.
+Working VNC does not establish that Windows RDP is enabled or configured.
+A platform administrator uses the setup panel above VNC to approve the guest
+address and detected identity and select the saved template login. After saving,
+the page checks again and selects the preferred available method. Students see
+the reason but cannot approve destinations. No server shell configuration is
+required for this GUI workflow; guest RDP/SSH service setup is still necessary.

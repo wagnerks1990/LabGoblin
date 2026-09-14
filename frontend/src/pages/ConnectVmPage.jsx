@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import VmResources from '../components/workflows/VmResources'
 import { WorkspaceHeading } from '../components/ui/WorkspaceKit'
 import { ErrorState, LoadingState } from '../components/workflows/WorkflowState'
 import WorkflowStatus from '../components/workflows/WorkflowStatus'
@@ -9,7 +10,7 @@ import { preferredConnection } from '../services/connectionChoice'
 
 const detail = error => typeof error?.response?.data?.detail === 'string' ? error.response.data.detail : 'LabGoblin could not complete the connection check.'
 
-function PrepareGuest({ id, os, onSaved }) {
+function PrepareGuest({ id, os, onSaved, needsSetup }) {
   const [address, setAddress] = useState('')
   const [confirmed, setConfirmed] = useState(false)
   const [probe, setProbe] = useState(null)
@@ -23,12 +24,13 @@ function PrepareGuest({ id, os, onSaved }) {
   const [discoveryHint, setDiscoveryHint] = useState('Reading guest agent information…')
   const [templateAvailable, setTemplateAvailable] = useState(false)
   const [useTemplate, setUseTemplate] = useState(false)
-  const port = os === 'windows' ? 3389 : 22
+  const [port, setPort] = useState(os === 'windows' ? 3389 : 22)
   useEffect(() => {
     let current = true
     api.get(`/vms/${id}/console/profile`).then(response => {
       if (!current) return
       setAddress(response.data.address || '')
+      setPort(response.data.port || (os === 'windows' ? 3389 : 22))
       setObservations(response.data.observed_addresses || [])
       setDiscoveryHint(response.data.discovery_hint || '')
       setTemplateAvailable(Boolean(response.data.template_credentials_available))
@@ -40,7 +42,7 @@ function PrepareGuest({ id, os, onSaved }) {
     event.preventDefault(); setBusy(true); setError(''); setProbe(null)
     try {
       const result = (await api.post(`/vms/${id}/console/probe`, { address, port, confirm_reserved_address: confirmed })).data
-      setProbe(result); setMac(result.mac_addresses[0] || '')
+      setProbe(result); setMac(observations.find(item => item.address === address)?.mac_address || result.mac_addresses[0] || '')
     } catch (err) { setError(detail(err)) } finally { setBusy(false) }
   }
   const save = async event => {
@@ -50,13 +52,14 @@ function PrepareGuest({ id, os, onSaved }) {
       setPassword(''); setUsername(''); setDomain(''); setProbe(null); await onSaved()
     } catch (err) { setError(detail(err)) } finally { setBusy(false) }
   }
-  return <details className='panel connection-prepare'>
-    <summary>Administrator: prepare guest access</summary>
+  return <details className='panel connection-prepare' open={needsSetup || undefined}>
+    <summary>Administrator: prepare guest access · {os === 'windows' ? 'Enable Windows RDP' : 'Enable Linux terminal'}</summary>
     <p>Reserve an address for this VM in DHCP or IPAM, enable {os === 'windows' ? 'Remote Desktop with NLA' : 'SSH'} in the guest, and allow port {port} through its firewall. VNC remains available for setup.</p>
     <form onSubmit={check} className='stack'>
       <p role='status'>{discoveryHint}</p>
       {observations.length ? <label className='ui-field'>Discovered VM address<select value={observations.some(item => item.address === address) ? address : ''} onChange={event => { setAddress(event.target.value); setProbe(null); setConfirmed(false) }}><option value=''>Select an address</option>{observations.map(item => <option key={`${item.address}-${item.mac_address}`} value={item.address}>{item.address} · {item.mac_address}{item.matches_cloud_init ? ' · matches cloud-init' : ''}</option>)}</select></label> : null}
       <label className='ui-field'>Reserved VM IP address<input required value={address} onChange={event => { setAddress(event.target.value); setProbe(null); setConfirmed(false) }} autoComplete='off'/></label>
+      <label className='ui-field'>Guest service port<input required type='number' min='1' max='65535' value={port} onChange={event => { setPort(Number(event.target.value)); setProbe(null) }}/></label>
       <label><input type='checkbox' checked={confirmed} onChange={event => setConfirmed(event.target.checked)} required/> I verified that this address is reserved for this VM, not another VM or a management service.</label>
       <button disabled={busy || !confirmed} type='submit'>{busy ? 'Checking…' : 'Detect guest service'}</button>
     </form>
@@ -81,6 +84,8 @@ export default function ConnectVmPage() {
   const { id } = useParams()
   const [search] = useSearchParams()
   const [options, setOptions] = useState(null)
+  const [vmDetails, setVmDetails] = useState(null)
+  const [detailsError, setDetailsError] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [protocol, setProtocol] = useState(null)
@@ -97,6 +102,13 @@ export default function ConnectVmPage() {
     finally { setLoading(false) }
   }, [id])
   useEffect(() => { autoOpened.current = false; setProtocol(null); refresh() }, [refresh])
+  useEffect(() => {
+    let current = true
+    setVmDetails(null); setDetailsError('')
+    if (!options || options.vm_id !== Number(id)) return undefined
+    api.get(`/vms/${id}/status`).then(response => { if (current) setVmDetails(response.data) }).catch(() => { if (current) setDetailsError('VM resource details could not be loaded. Refresh them from My machines.') })
+    return () => { current = false }
+  }, [id, options])
   useEffect(() => {
     if (!options || options.vm_id !== Number(id) || autoOpened.current) return
     const preferred = preferredConnection(options, search.get('method'))
@@ -129,14 +141,15 @@ export default function ConnectVmPage() {
     {error ? <ErrorState message={error} onRetry={refresh} retrying={loading}/> : null}
     {options ? <>
       <p className='muted'>{options.operating_system === 'unknown' ? 'Guest OS not identified' : options.operating_system === 'windows' ? 'Windows' : 'Linux'} · {options.running ? 'VM running' : 'VM stopped'}</p>
-      <div className='connection-choices'>{methods.map(method => <button key={method.protocol} className={`connection-choice ${protocol === method.protocol ? 'connection-choice--active' : ''}`} disabled={!method.ready || loading} aria-pressed={protocol === method.protocol} onClick={() => { setProtocol(method.protocol); setAttempt(value => value + 1) }}><strong>{method.label}</strong><span>{method.description}</span><span>{method.ready ? 'Connect in browser' : 'Not available'}</span></button>)}</div>
+      <div className='connection-choices'>{methods.map(method => <button key={method.protocol} className={`connection-choice ${protocol === method.protocol ? 'connection-choice--active' : ''}`} disabled={!method.ready || loading} aria-pressed={protocol === method.protocol} onClick={() => { setProtocol(method.protocol); setAttempt(value => value + 1) }}><strong>{method.label}</strong><span>{method.description}</span><span>{method.ready ? 'Connect in browser' : options.method_hints?.[method.protocol] || 'Not available'}</span></button>)}</div>
       <p className='ui-field__hint' role='status'>{options.hint}</p>
     </> : null}
+    {options?.vm_id === Number(id) && options.can_configure && options.operating_system !== 'unknown' ? <PrepareGuest key={id} id={id} os={options.operating_system} needsSetup={options.running && !(options.rdp || options.terminal)} onSaved={async () => { autoOpened.current = false; await refresh() }}/> : null}
+    {vmDetails ? <details className='panel'><summary>VM resources and IP addresses</summary><VmResources vm={vmDetails}/></details> : detailsError ? <p role='status'>{detailsError}</p> : null}
     {protocol ? <div className='panel'>
       <div className='console-toolbar group'><span role='status'>Connection: <WorkflowStatus value={state}/></span><button onClick={() => setAttempt(value => value + 1)}>Reconnect</button><button onClick={() => { setProtocol(null); setState('closed') }}>Disconnect</button><button disabled={state !== 'connected'} onClick={toggleFullscreen} aria-pressed={fullscreen}>{fullscreen ? 'Exit full screen' : 'Full screen'}</button>{protocol !== 'ssh' ? <button disabled={state !== 'connected'} onClick={() => connection.current?.sendCtrlAltDelete()}>Ctrl+Alt+Delete</button> : null}</div>
       <p className='ui-field__hint'>Click the session to send keyboard input. Closing this page disconnects your session; it does not shut down the VM.</p>
       <div ref={screen} className='console-surface guacamole-surface' role='application' aria-label='LabGoblin remote session'/>
     </div> : null}
-    {options?.vm_id === Number(id) && options.can_configure && options.operating_system !== 'unknown' ? <PrepareGuest key={id} id={id} os={options.operating_system} onSaved={refresh}/> : null}
   </section>
 }

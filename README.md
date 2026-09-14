@@ -1,5 +1,7 @@
 # LabGoblin
 
+VM cards now show live allocated CPU, memory and disk capacity, usage and uptime, and guest-agent IP/MAC observations. Connection choices explain unavailable RDP/SSH and expose administrator preparation above VNC. See [browser connections](docs/operations/consoles.md).
+
 Guided lab setup now combines class, pool, roster/accounts, assignments, and access scheduling in an editable wizard. Students land on a simplified My labs home with direct browser connections. See [instructor setup](docs/user-guide/instructor-workflow.md).
 
 

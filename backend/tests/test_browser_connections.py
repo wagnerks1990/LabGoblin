@@ -255,3 +255,96 @@ def test_guacamole_ws_rejects_origin_before_any_upstream_connection(monkeypatch)
     socket = Socket()
     asyncio.run(console_ws.guacamole_ws(1, "rdp", socket, None))
     assert socket.closed == 1008
+
+
+def test_connection_options_explain_missing_rdp_profile_and_keep_vnc(monkeypatch):
+    from app.api.routers import console
+    from app.services import guacamole, connection_checks
+    from unittest.mock import AsyncMock
+
+    vm = SimpleNamespace(id=1, vm_name="Windows lab", proxmox_cluster_id=1)
+    monkeypatch.setattr(console, "_get_vm_for_user", lambda *args: vm)
+    monkeypatch.setattr(console, "ProxmoxClient", lambda **kwargs: object())
+    monkeypatch.setattr(
+        console,
+        "inspect_console",
+        AsyncMock(
+            return_value={
+                "operating_system": "windows",
+                "running": True,
+                "vnc": True,
+                "_config": {},
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        connection_checks, "check_proxmox_vnc", AsyncMock(return_value=True)
+    )
+    monkeypatch.setattr(
+        guacamole, "check_guacamole_reachable", AsyncMock(return_value=(True, "Ready"))
+    )
+    user = SimpleNamespace(role_rel=SimpleNamespace(name="Admin"))
+    result = asyncio.run(
+        console.connection_options(
+            1, user, SimpleNamespace(get=lambda *args: None), None
+        )
+    )
+    assert result["vnc"] is True
+    assert result["rdp"] is False
+    assert "setup is incomplete" in result["method_hints"]["rdp"]
+    assert result["can_configure"] is True
+
+
+def test_connection_options_ready_rdp_respects_lab_policy_and_identity_failure(
+    monkeypatch,
+):
+    from app.api.routers import console
+    from app.services import guacamole
+    from unittest.mock import AsyncMock
+
+    vm = SimpleNamespace(id=1, vm_name="Windows lab", proxmox_cluster_id=1)
+    profile = SimpleNamespace(enabled=True, protocol="rdp")
+    db = SimpleNamespace(get=lambda *args: profile)
+    user = SimpleNamespace(role_rel=SimpleNamespace(name="Student"))
+
+    def access(*args):
+        if args[-1] == "rdp":
+            raise HTTPException(403, "Lab policy")
+        return vm
+
+    monkeypatch.setattr(console, "_get_vm_for_user", access)
+    monkeypatch.setattr(console, "ProxmoxClient", lambda **kwargs: object())
+    monkeypatch.setattr(
+        console,
+        "inspect_console",
+        AsyncMock(
+            return_value={
+                "operating_system": "windows",
+                "running": True,
+                "vnc": False,
+                "_config": {},
+            }
+        ),
+    )
+    monkeypatch.setattr(console, "profile_parameters", lambda *args: None)
+    monkeypatch.setattr(
+        console, "check_profile", AsyncMock(return_value=(True, "Ready"))
+    )
+    monkeypatch.setattr(
+        guacamole, "check_guacamole_reachable", AsyncMock(return_value=(True, "Ready"))
+    )
+    result = asyncio.run(console.connection_options(1, user, db, None))
+    assert result["rdp"] is False
+    assert "policy" in result["method_hints"]["rdp"]
+    monkeypatch.setattr(console, "_get_vm_for_user", lambda *args: vm)
+    result = asyncio.run(console.connection_options(1, user, db, None))
+    assert result["rdp"] is True
+    assert result["can_configure"] is False
+    monkeypatch.setattr(
+        console,
+        "check_profile",
+        AsyncMock(return_value=(False, "Server identity changed")),
+    )
+    result = asyncio.run(console.connection_options(1, user, db, None))
+    assert result["rdp"] is False
+    assert result["method_hints"]["rdp"] == "Server identity changed"

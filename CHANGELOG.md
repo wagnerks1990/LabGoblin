@@ -1,5 +1,12 @@
 # Changelog
 
+## VM resource visibility and guest connection guidance
+
+- Show vCPU allocation, CPU use, allocated/reported memory, per-disk capacity, uptime, I/O totals and agent IP/MAC addresses on machines and lab details.
+- Explain RDP/SSH blockers per method; place administrator preparation above the console, preserve custom ports and reuse template logins.
+- Switch to the preferred available method after saving guest setup and render connected sessions with a success badge.
+- Bound hypervisor observation traffic and report partial failures explicitly.
+
 Guided lab setup now combines class, pool, roster/accounts, assignments, and access scheduling in an editable wizard. Students land on a simplified My labs home with direct browser connections. See [instructor setup](docs/user-guide/instructor-workflow.md).
 
 

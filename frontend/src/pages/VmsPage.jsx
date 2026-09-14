@@ -6,6 +6,8 @@ import { CollectionToolbar, MetricStrip, ViewToggle, WorkspaceHeading } from '..
 import NavIcon from '../components/navigation/NavIcon'
 import { selectMachines } from '../state/workspaceCollections'
 import api from '../services/api'
+import VmResources from '../components/workflows/VmResources'
+import { vmAddress } from '../services/vmResources'
 import GuestCredentialReveal from '../components/workflows/GuestCredentialReveal'
 
 const terminalStates = new Set(['succeeded', 'failed', 'cancelled'])
@@ -100,7 +102,8 @@ export default function VmsPage({ setMessage }) {
             <div><span className='resource-emblem'><NavIcon name='monitor'/></span><h3>{vm.vm_name}</h3><WorkflowStatus value={vm.status} /></div>
             <button type='button' onClick={() => act(vm, 'status')} disabled={working} aria-label={`Refresh ${vm.vm_name} status`}>Refresh</button>
           </div>
-          <div className='resource-facts'><span>VMID <strong>{vm.vmid}</strong></span><span>Node <strong>{vm.proxmox_node || 'Not assigned'}</strong></span><span>Address <strong>{vm.assigned_ip || vm.hostname || 'Not reported'}</strong></span></div>
+          <div className='resource-facts'><span>VMID <strong>{vm.vmid}</strong></span><span>Node <strong>{vm.proxmox_node || 'Not assigned'}</strong></span></div>
+          <VmResources vm={vm}/>
           {working ? <p className='muted' role='status'>{busy[vm.id] === 'status' ? 'Refreshing status…' : `${busy[vm.id]} in progress…`}</p> : null}
           {missing ? <p className='msg error'>This VM is unavailable. Refresh its status or ask an instructor for help.</p> : null}
           {running ? <Link className='btn btn-connection' to={`/console/${vm.id}`}>Connect in browser</Link>
@@ -111,7 +114,7 @@ export default function VmsPage({ setMessage }) {
             <dl>
               <dt>VMID</dt><dd>{vm.vmid}</dd>
               <dt>Node</dt><dd>{vm.proxmox_node || 'Not assigned'}</dd>
-              <dt>Address</dt><dd>{vm.assigned_ip || vm.hostname || 'Not reported'}</dd>
+              <dt>Address</dt><dd>{vmAddress(vm)}</dd>
               {vm.assignment_expires_at ? <><dt>Assignment ends</dt><dd>{new Date(vm.assignment_expires_at).toLocaleString()}</dd></> : null}
             </dl>
             <div className='group'>
