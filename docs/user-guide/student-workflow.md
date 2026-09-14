@@ -29,3 +29,17 @@ Use **My machines** for permitted power actions and status refreshes. Assigned
 VM deletion is managed by your instructor. **Lab activity** shows durable jobs,
 verified results, warnings, and errors. **Account settings** changes your
 LabGoblin password. Ask your instructor or administrator for a login reset.
+
+## Machine information and connection help
+
+Open **My machines** for allocated vCPUs, memory, disk capacity and guest IPs.
+Expand **Resource and network details** for CPU/memory use, uptime, per-disk
+capacity, IP/MAC addresses, I/O totals and the last observation time. The same
+information is available under **Machine details** on My labs and **VM resources
+and IP addresses** on the connection page. Use Refresh for a new observation.
+
+Disk capacity does not mean free space inside Windows or Linux. Missing agent
+information is shown with an explanation; a saved address is labeled separately.
+If RDP or terminal is unavailable, read that method's reason and ask your
+instructor or platform administrator. Working VNC does not mean RDP is ready.
+Students cannot approve connection destinations or change the lab's access policy.

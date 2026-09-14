@@ -27,7 +27,7 @@ The primary design goals are:
 | Scheduler | Creates periodic reconciliation, expiration, and health work; currently hosted in the API process |
 | PostgreSQL | Authoritative configuration, desired state, jobs, and audit history |
 | Redis | Queue transport, distributed locks, rate limits, and short-lived events |
-| Console broker | Current same-origin noVNC and key-based SSH WebSocket proxy; Guacamole remains planned |
+| Console broker | Same-origin Guacamole broker and bundled private guacd for Proxmox VNC, Windows RDP and Linux SSH |
 | Reverse proxy | TLS termination and routing for web, API, WebSocket, and Guacamole traffic |
 | Cloudflare edge | Optional DNS, TLS, WAF, Access, and outbound Tunnel publication; disabled by default |
 | Documentation | Version-matched MkDocs wiki |

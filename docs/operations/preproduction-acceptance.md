@@ -69,10 +69,15 @@ environment-dependent checks.
   VM, lost task, cross-tenant action, or false success.
 - Reconciliation distinguishes absent VMs from authentication, TLS, timeout, and
   server failures; record cleanup requires a fresh verified absence.
-- noVNC launch, resize, disconnect, expiry, revocation, and reconnect pass in
+- Guacamole Proxmox VNC launch, resize, disconnect, expiry, revocation, and reconnect pass in
   every supported browser.
-- SSH terminal remains disabled until per-assignment credentials and trusted
-  destination binding pass the hostile-guest pivot test.
+- Windows RDP and Linux SSH require approved destinations, pinned identities,
+  encrypted logins and current lab access; verify changed identities, revoked
+  sessions and disabled profiles block access and pass the hostile-guest pivot test.
+- Validate template-login inheritance, custom ports and post-save method selection.
+- Validate unavailable agent, multiple IPs/disks and partial resource refresh;
+  observations must never authorize a connection. The legacy SSH pilot remains
+  disabled. These are live gates, not claims established by mocked tests.
 - SSE remains live through the deployed proxy without buffering and terminates
   promptly after authorization revocation.
 - On the real Cloudflare route, API/authentication responses bypass cache,

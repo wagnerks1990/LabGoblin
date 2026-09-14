@@ -24,8 +24,10 @@ HTTP `202` with an operation identifier.
   ownership, and lab access flags.
 - `services/organization_access.py` resolves tenant scope and role rank.
 - `services/asset_sync.py` manages restart-safe asset jobs with JSON metadata.
-- `services/console_ws_service.py` brokers noVNC and key-based SSH without
-  disclosing control-plane credentials.
+- `services/guacamole_console.py` brokers same-origin browser sessions through
+  bundled guacd; `remote_profile.py` enforces approved guest identity and login.
+- `services/vm_observations.py` collects typed resource data;
+  `guest_discovery.py` reads and filters VM-bound guest-agent interfaces.
 
 ## Background work
 
@@ -44,7 +46,30 @@ drift.
 
 ## Remote access
 
-The current supported browser paths are same-origin noVNC and SSH WebSockets.
-RDP downloads a credential-prompting file. SPICE remains a native-client path.
-Guacamole is the longer-term broker but is not part of the current Compose
-deployment.
+The primary browser path is the same-origin Guacamole WebSocket for Windows
+RDP, Linux SSH terminal, and Proxmox VNC. Compose bundles guacd 1.6.0; there is
+no separate Guacamole web application or student account. Proxmox VNC uses an
+authenticated temporary bridge. Guest RDP/SSH uses an administrator-approved
+reserved address, matching Proxmox MAC, pinned server identity and encrypted
+VM-specific or template login. Lab policy and live sessions remain authoritative.
+Legacy compatibility routes are retained; the old SSH pilot is disabled and
+SPICE is unsupported. See [browser connections](operations/consoles.md).
+
+## Read-only VM observations
+
+`GET /api/vms` and `GET /api/vms/{id}/status` authorize the application VM id
+before calling Proxmox. `VMResponse.resources` contains allocation, usage,
+uptime and cumulative I/O. `observed_addresses` contains filtered agent IP/MAC
+observations. `observed_at`, `resource_warning` and `discovery_hint` distinguish
+fresh, partial and unavailable data. These fields are transient response data;
+no resource migration or guest-IP persistence is performed.
+
+The list limits active VM checks to four and the overall check to 20 seconds.
+Status/configuration calls and agent discovery have their own deadlines.
+Partial failures preserve available fields with warnings. Disk capacity is
+allocated storage, not guest filesystem free space. Discovery must never write
+`assigned_ip`, modify remote profiles or authorize credential transmission.
+
+Connection options return independent `method_hints`; a successful VNC check
+must not hide a blocked RDP/SSH reason. A saved profile enables its corresponding
+VM protocol flag, while assignment policy can still deny student access.

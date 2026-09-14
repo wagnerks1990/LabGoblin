@@ -11,7 +11,9 @@ See [Brand and naming](brand.md) for canonical product identity, colors, termino
 
 LabGoblin is currently an alpha-stage control-plane prototype. Proxmox VE discovery, template import, basic VM lifecycle operations, administrative CRUD, and operational views exist. The application is not yet approved for unsupervised student or production use.
 
-Implemented pilot foundations now include first-admin enrollment, tenant-scoped classroom assignments, atomic VMIDs, leased durable VM operations, expiration cleanup, server-brokered noVNC/SSH, immutable-SHA updates, and database rollback.
+Implemented pilot foundations now include first-admin enrollment, tenant-scoped classroom assignments, atomic VMIDs, leased durable VM operations, expiration cleanup, bundled Guacamole VNC/RDP/SSH, encrypted template guest logins, an editable lab
+setup wizard, student My labs home, live VM resource observations, immutable-SHA
+updates, and database rollback. See [browser connections](operations/consoles.md).
 
 The remaining release blockers are:
 
@@ -36,11 +38,12 @@ See the [V2 rebuild roadmap](roadmap/v2-rebuild.md) for implementation order.
 
 1. An administrator connects a Proxmox VE cluster with a least-privilege token.
 2. An administrator opens Templates to discover the active cluster catalog automatically, reviews enabled templates, and configures placement policy.
-3. A teacher creates a class, imports a roster, and defines a lab.
-4. LabGoblin creates or allocates isolated resources for students or teams.
-5. Students launch their assigned systems through the supported console.
-6. The teacher monitors, extends, resets, or ends the lab.
-7. Durable workers reconcile and clean up the resources according to policy.
+3. A teacher uses the [editable lab wizard](user-guide/instructor-workflow.md) to select class, template/pool, students, access and schedule.
+4. Students use [My labs](user-guide/student-workflow.md) to prepare assigned machines through durable jobs.
+5. Students connect through an available browser method; RDP/SSH needs guest preparation and administrator approval.
+6. Teachers monitor resources, edit unbound assignments, or end runs through reviewed workflows.
+7. Durable workers verify lifecycle results. Isolated multi-VM topologies, extensions and rebuild workflows remain roadmap work.
+
 
 ## Documentation ownership
 
