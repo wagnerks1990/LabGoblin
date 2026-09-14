@@ -95,7 +95,7 @@ export default function AppLayout({ children, setUser, user }) {
       <div className='app-workspace'>
         <AppHeader
           access={access}
-          title={pageTitleForPath(loc.pathname)}
+          title={loc.pathname === '/' && !access.tenantInstructor && !access.platformAdmin ? 'My labs' : pageTitleForPath(loc.pathname)}
           user={user}
           organizations={organizations}
           organizationId={organizationId}

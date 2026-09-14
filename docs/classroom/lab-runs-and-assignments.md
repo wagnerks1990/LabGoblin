@@ -44,10 +44,10 @@ Scheduling controls authorization without requiring a worker to flip the state
 at the exact start time. At `ends_at`, access closes immediately even if the
 database state still says `scheduled` or `active`.
 
-Ending or expiration currently blocks student access but does **not** claim to
-stop or delete the Proxmox VM. Automated power-off, snapshot, verified cleanup,
-and extension are later durable-job work. Instructors can still see tenant VMs
-for investigation and cleanup.
+Time-window expiration immediately blocks student access. The explicit End run
+action requires a preview and queues verified VM deletion; the click itself does
+not mean deletion has completed. Instructors can still investigate tenant VMs
+and monitor the durable cleanup operations.
 
 ## Instructor workflow
 
@@ -99,3 +99,20 @@ students until an instructor creates an active run and assignment. Tenant
 instructors and administrators can still see those records and decide whether
 to assign, migrate, or remove them.
 
+
+## Unified setup API
+
+The default teaching screen now uses the [guided setup](../user-guide/instructor-workflow.md).
+`GET /api/admin/lab-setups/catalog` returns tenant-scoped database choices without
+requiring a live hypervisor request. `POST /api/admin/lab-setups` creates the reviewed
+setup atomically; `GET/PUT /api/admin/lab-setups/{run_id}` retrieves and edits it.
+All routes require tenant instructor authority and enforce class ownership.
+New login accounts additionally require the canonical platform Admin role.
+
+A UUID submission receipt in migration `20260914_0019` prevents duplicate retries.
+Receipts contain identifiers and a request fingerprint, never account passwords.
+The same key cannot be reused for changed settings. Edits require the snapshot
+ETag and lock the run/assignment rows; changed VM bindings invalidate the edit.
+Roster removal does not delete class enrollment or silently detach a VM. Pool
+changes and roster/quota reductions affecting a linked VM require separate cleanup.
+The wizard cannot downgrade an active run to a draft or edit an ended run.

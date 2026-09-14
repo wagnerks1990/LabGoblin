@@ -134,7 +134,7 @@ test('core workflows distinguish loading, failure, empty, and durable activity',
 })
 
 test('instructor workflow pages expose semantic regions, labels, and table structure', () => {
-  const classroom = source('src/pages/ClassroomPage.jsx')
+  const classroom = source('src/pages/ClassroomManagementPage.jsx')
   const pools = source('src/pages/PoolsPage.jsx')
   const sessions = source('src/pages/SessionActivityPage.jsx')
   const events = source('src/pages/EventsPage.jsx')

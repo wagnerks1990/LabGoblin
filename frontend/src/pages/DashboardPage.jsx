@@ -5,6 +5,7 @@ import { AccessContext } from '../components/AccessControl'
 import NavIcon from '../components/navigation/NavIcon'
 import { CapacityMeter } from '../components/ui/WorkspaceKit'
 import api from '../services/api'
+import StudentHomePage from './StudentHomePage'
 
 function formatBytes(value) {
   if (value == null) return '—'
@@ -34,6 +35,11 @@ function errorDetail(error, fallback) {
 }
 
 export default function DashboardPage({ user }) {
+  const access = useContext(AccessContext)
+  return access.tenantInstructor || access.platformAdmin ? <StaffDashboard user={user}/> : <StudentHomePage user={user}/>
+}
+
+function StaffDashboard({ user }) {
   const access = useContext(AccessContext)
   const isPlatformAdmin = String(user?.role || '').toLowerCase() === 'admin'
   const [vms, setVms] = useState([])

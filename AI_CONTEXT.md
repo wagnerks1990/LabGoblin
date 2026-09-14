@@ -217,3 +217,19 @@ by VM/template lists. This explicit sharing feature does not expose Proxmox,
 gateway, infrastructure SSH credentials, private keys, or VM-specific overrides.
 Shared template accounts are shared across clones; use separate template accounts
 or VM overrides where separate guest identities are required.
+
+## Guided setup and student home
+
+The teaching entry now uses a five-step editable setup wizard: lab/class,
+machines, students, access/schedule, and review. It reuses existing resources or
+creates linked classroom records atomically. New accounts remain platform-admin
+only. Saved drafts reopen through Edit setup; unsaved password fields remain
+memory-only. Detailed classroom management remains available for shared
+blueprints and destructive run actions. Students land on My labs with
+instructions, start/provision, browser Connect, and approved guest-login reveal.
+
+Validation covers atomic rollback, replay, stale edits, linked-VM protection,
+role and tenant boundaries, enrollment availability, wizard validation, and the
+production frontend build. Browser visual/keyboard validation at 320, 390, 768,
+1024, and 1440 CSS pixels remains a required deployment check; no live browser
+or Proxmox classroom result is claimed from these local tests.

@@ -116,3 +116,46 @@
 .guest-credential-reveal dd { margin-inline-start: 0; overflow-wrap: anywhere; }
 .guest-credential-reveal code { white-space: pre-wrap; }
 .template-guest-settings .stack { display: grid; gap: var(--space-3, 12px); }
+
+/* Guided teaching and student workspaces share LabGoblin's brand tokens. */
+.lab-studio, .student-home { display: grid; gap: var(--space-5); min-width: 0; }
+.lab-resource-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: var(--space-4); }
+.lab-wizard-layout { display: grid; grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr); gap: var(--space-5); align-items: start; }
+.lab-wizard-steps ol { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-2); }
+.lab-wizard-steps button { width: 100%; display: flex; align-items: center; gap: var(--space-3); text-align: start; color: var(--color-text-secondary); background: var(--color-surface); border: 1px solid var(--color-border); }
+.lab-wizard-steps button[aria-current='step'] { border-color: var(--color-primary); color: var(--labgoblin-mint); background: var(--color-primary-soft); }
+.lab-wizard-steps button > span { border: 1px solid currentColor; border-radius: 50%; width: 1.75rem; height: 1.75rem; display: grid; place-items: center; flex-shrink: 0; }
+.lab-wizard-steps > p { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.lab-wizard-panel, .lab-wizard-fields { display: grid; gap: var(--space-4); min-width: 0; }
+.lab-wizard-fields { border: 0; padding: 0; margin: 0; }
+.lab-wizard-fields input, .lab-wizard-fields select, .lab-wizard-fields textarea { min-width: 0; max-width: 100%; }
+.lab-wizard-panel h3:focus { outline: 2px solid var(--color-primary); outline-offset: .25rem; }
+.lab-wizard-footer { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
+.lab-wizard-footer span { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.lab-roster-list { max-height: 20rem; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: var(--space-2); }
+.lab-roster-list label, .lab-check { display: flex; align-items: center; gap: var(--space-3); min-height: 2.75rem; overflow-wrap: anywhere; }
+.lab-roster-list label { padding: var(--space-3); background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.lab-roster-list input, .lab-check input { flex-shrink: 0; }
+.lab-review { display: grid; grid-template-columns: minmax(6rem, 1fr) minmax(0, 3fr); gap: var(--space-3); }
+.lab-review dd { margin: 0; overflow-wrap: anywhere; }
+.lab-review dt { color: var(--color-text-muted); }
+.lab-template-login { grid-column: 2; }
+.student-welcome { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-6); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-primary-soft); }
+.student-welcome h2 { font-size: clamp(1.5rem, 4vw, 2.25rem); }
+.student-welcome img { width: clamp(3rem, 10vw, 7rem); height: auto; }
+.student-lab { display: grid; gap: var(--space-4); }
+.student-instructions { white-space: pre-wrap; overflow-wrap: anywhere; }
+.student-machine { display: grid; align-content: start; gap: var(--space-3); min-width: 0; padding: var(--space-4); background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.student-machine p { overflow-wrap: anywhere; }
+.auth-learning-steps { padding-inline-start: 1.5rem; display: grid; gap: var(--space-5); }
+.auth-learning-steps li { padding-inline-start: var(--space-2); }
+.auth-learning-steps strong, .auth-learning-steps span { display: block; }
+.auth-learning-steps span { color: var(--color-text-secondary); margin-top: var(--space-1); }
+@media (max-width: 47.9375rem) {
+  .lab-wizard-layout { grid-template-columns: minmax(0, 1fr); }
+  .lab-template-login { grid-column: 1; }
+  .lab-wizard-steps ol { grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); }
+  .student-welcome { padding: var(--space-4); align-items: start; }
+  .student-welcome img { width: 3rem; }
+}
+@media (max-width: 24rem) { .lab-review { grid-template-columns: minmax(0, 1fr); } .lab-review dd { margin-bottom: var(--space-2); } }

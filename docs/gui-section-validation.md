@@ -144,3 +144,19 @@ and platform admin sessions at **320, 390, 768, 1024, 1440 CSS pixels**:
 7. Check page overflow, compact header/drawer, bottom navigation, keyboard focus,
    sign-in, tenant switching, and live feedback. Console connectivity still
    requires separate Ubuntu/Proxmox verification.
+
+## Guided setup and student home
+
+The teaching entry now uses a five-step editable setup wizard: lab/class,
+machines, students, access/schedule, and review. It reuses existing resources or
+creates linked classroom records atomically. New accounts remain platform-admin
+only. Saved drafts reopen through Edit setup; unsaved password fields remain
+memory-only. Detailed classroom management remains available for shared
+blueprints and destructive run actions. Students land on My labs with
+instructions, start/provision, browser Connect, and approved guest-login reveal.
+
+Validation covers atomic rollback, replay, stale edits, linked-VM protection,
+role and tenant boundaries, enrollment availability, wizard validation, and the
+production frontend build. Browser visual/keyboard validation at 320, 390, 768,
+1024, and 1440 CSS pixels remains a required deployment check; no live browser
+or Proxmox classroom result is claimed from these local tests.

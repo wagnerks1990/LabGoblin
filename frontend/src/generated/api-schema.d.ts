@@ -372,6 +372,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/lab-setups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Setup */
+        post: operations["create_setup_api_admin_lab_setups_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/lab-setups/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Setup Catalog */
+        get: operations["setup_catalog_api_admin_lab_setups_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/lab-setups/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Setup */
+        get: operations["get_setup_api_admin_lab_setups__run_id__get"];
+        /** Edit Setup */
+        put: operations["edit_setup_api_admin_lab_setups__run_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/lab-vms/{id}/app-record": {
         parameters: {
             query?: never;
@@ -2933,6 +2985,58 @@ export interface paths {
         put?: never;
         /** Bulk Vm Action */
         post: operations["bulk_vm_action_v1_api_admin_lab_runs__run_id__vms__action__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/api/admin/lab-setups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Setup */
+        post: operations["create_setup_v1_api_admin_lab_setups_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/api/admin/lab-setups/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Setup Catalog */
+        get: operations["setup_catalog_v1_api_admin_lab_setups_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/api/admin/lab-setups/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Setup */
+        get: operations["get_setup_v1_api_admin_lab_setups__run_id__get"];
+        /** Edit Setup */
+        put: operations["edit_setup_v1_api_admin_lab_setups__run_id__put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -5741,6 +5845,11 @@ export interface components {
         /** LabAssignmentOut */
         LabAssignmentOut: {
             /**
+             * Access Open
+             * @default false
+             */
+            access_open: boolean;
+            /**
              * Can Provision
              * @default false
              */
@@ -5750,10 +5859,14 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Ends At */
+            ends_at?: string | null;
             /** Expires At */
             expires_at?: string | null;
             /** Id */
             id: number;
+            /** Instructions */
+            instructions?: string | null;
             /** Lab Name */
             lab_name?: string | null;
             /** Lab Run Id */
@@ -5762,8 +5875,12 @@ export interface components {
             organization_id: number;
             /** Run Name */
             run_name?: string | null;
+            /** Run State */
+            run_state?: string | null;
             /** Slot Index */
             slot_index: number;
+            /** Starts At */
+            starts_at?: string | null;
             /** Status */
             status: string;
             /** Student Vm Id */
@@ -5995,6 +6112,146 @@ export interface components {
             action: string;
             /** Confirmation */
             confirmation?: string | null;
+        };
+        /** LabSetupCatalog */
+        LabSetupCatalog: {
+            /** Classes */
+            classes: components["schemas"]["SetupChoice"][];
+            /** Members */
+            members: components["schemas"]["SetupMember"][];
+            /** Pools */
+            pools: components["schemas"]["SetupChoice"][];
+            /** Runs */
+            runs: components["schemas"]["SetupChoice"][];
+            /** Templates */
+            templates: components["schemas"]["SetupChoice"][];
+        };
+        /** LabSetupOut */
+        LabSetupOut: {
+            /** Assignment Count */
+            assignment_count: number;
+            /** Class Id */
+            class_id: number;
+            /** Class Name */
+            class_name: string;
+            /** Console Enabled */
+            console_enabled: boolean;
+            /** Description */
+            description: string;
+            /** Ends At */
+            ends_at: string | null;
+            /** Etag */
+            etag: string;
+            /** Lab Id */
+            lab_id: number;
+            /** Name */
+            name: string;
+            /** Pool Id */
+            pool_id: number;
+            /** Pool Name */
+            pool_name: string;
+            /** Rdp Enabled */
+            rdp_enabled: boolean;
+            /** Run Id */
+            run_id: number;
+            /** Slots */
+            slots: number;
+            /** Starts At */
+            starts_at: string | null;
+            /** State */
+            state: string;
+            /** Student Can Power Off */
+            student_can_power_off: boolean;
+            /** Student Can Reset */
+            student_can_reset: boolean;
+            /** Student Ids */
+            student_ids: number[];
+            /** Term */
+            term: string;
+            /** Terminal Enabled */
+            terminal_enabled: boolean;
+        };
+        /** LabSetupWrite */
+        LabSetupWrite: {
+            /** Class Id */
+            class_id?: number | null;
+            /**
+             * Class Name
+             * @default
+             */
+            class_name: string;
+            /**
+             * Console Enabled
+             * @default true
+             */
+            console_enabled: boolean;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Ends At */
+            ends_at?: string | null;
+            /** Expected Etag */
+            expected_etag?: string | null;
+            /** Name */
+            name: string;
+            /** New Students */
+            new_students?: components["schemas"]["SetupStudent"][];
+            /** Pool Id */
+            pool_id?: number | null;
+            /**
+             * Rdp Enabled
+             * @default true
+             */
+            rdp_enabled: boolean;
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /**
+             * Reviewed
+             * @default false
+             */
+            reviewed: boolean;
+            /**
+             * Slots
+             * @default 1
+             */
+            slots: number;
+            /** Starts At */
+            starts_at?: string | null;
+            /**
+             * State
+             * @default draft
+             * @enum {string}
+             */
+            state: "draft" | "scheduled" | "active";
+            /**
+             * Student Can Power Off
+             * @default false
+             */
+            student_can_power_off: boolean;
+            /**
+             * Student Can Reset
+             * @default false
+             */
+            student_can_reset: boolean;
+            /** Student Ids */
+            student_ids?: number[];
+            /** Template Id */
+            template_id?: number | null;
+            /**
+             * Term
+             * @default
+             */
+            term: string;
+            /**
+             * Terminal Enabled
+             * @default true
+             */
+            terminal_enabled: boolean;
         };
         /** LoginRequest */
         LoginRequest: {
@@ -6394,6 +6651,69 @@ export interface components {
             id: number;
             /** User Agent */
             user_agent?: string | null;
+        };
+        /** SetupChoice */
+        SetupChoice: {
+            /**
+             * Assignment Count
+             * @default 0
+             */
+            assignment_count: number;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /** Id */
+            id: number;
+            /**
+             * Maintenance Mode
+             * @default false
+             */
+            maintenance_mode: boolean;
+            /**
+             * Max Vms Per Student
+             * @default 1
+             */
+            max_vms_per_student: number;
+            /** Name */
+            name: string;
+            /** Source Vmid */
+            source_vmid?: number | null;
+            /** State */
+            state?: string | null;
+            /** Template Vmid */
+            template_vmid?: number | null;
+            /** Term */
+            term?: string | null;
+        };
+        /** SetupMember */
+        SetupMember: {
+            /** Is Active */
+            is_active: boolean;
+            /** Role */
+            role: string;
+            /** User Id */
+            user_id: number;
+            /** Username */
+            username: string;
+        };
+        /** SetupStudent */
+        SetupStudent: {
+            /**
+             * Display Name
+             * @default
+             */
+            display_name: string;
+            /** Email */
+            email: string;
+            /**
+             * Password
+             * Format: password
+             */
+            password: string;
+            /** Username */
+            username: string;
         };
         /** SyncCtTemplateRequest */
         SyncCtTemplateRequest: {
@@ -7800,6 +8120,142 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiEnvelope_dict_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_setup_api_admin_lab_setups_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LabSetupWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabSetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    setup_catalog_api_admin_lab_setups_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabSetupCatalog"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_setup_api_admin_lab_setups__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                run_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabSetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    edit_setup_api_admin_lab_setups__run_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                run_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LabSetupWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabSetupOut"];
                 };
             };
             /** @description Validation Error */
@@ -13640,6 +14096,142 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiEnvelope_dict_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_setup_v1_api_admin_lab_setups_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LabSetupWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabSetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    setup_catalog_v1_api_admin_lab_setups_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabSetupCatalog"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_setup_v1_api_admin_lab_setups__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                run_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabSetupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    edit_setup_v1_api_admin_lab_setups__run_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Organization-ID"?: number | null;
+            };
+            path: {
+                run_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LabSetupWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabSetupOut"];
                 };
             };
             /** @description Validation Error */

@@ -2,28 +2,30 @@
 
 ## Open an assigned lab
 
-1. Sign in and select your organization if prompted.
-2. Open **Create VM** to see active assignments that permit provisioning.
-3. Select the assignment and approved template, then submit once.
-4. Open **Operations** or **My Lab VMs** to follow queued provisioning.
-5. Wait for verified readiness before launching the console.
+1. Sign in with your **LabGoblin account** and select your organization if prompted.
+2. Your **My labs** home displays assigned labs, instructions, schedules, and machines.
+3. Choose **Start lab** to prepare an available assignment. Progress remains visible
+   and durable even if you leave the page.
+4. Choose **Start machine** for a stopped machine. Wait for verified readiness.
+5. Choose **Connect in browser** to open an available desktop or terminal.
 
-Only VMs connected to your active enrollment, assignment, lab run, and
-ownership are available. A lab that has not started or has ended is an inactive
-assignment, not a reason to bypass the schedule.
+The connection page chooses an available Windows RDP, Linux SSH terminal, or
+Proxmox VNC method and lets you switch between validated choices. Guest network
+services require the administrator's approved connection profile. The browser
+never needs Proxmox or Guacamole account credentials.
 
-## Manage a VM
+**Show lab login** reveals the template guest account only when sharing is enabled
+and your current assignment permits access. It hides after 30 seconds or when
+the page becomes hidden. This guest login may differ from your LabGoblin account.
 
-Use **My Lab VMs** to start, stop, reboot, refresh, or connect when the lab
-policy allows it. Buttons disappear or become unavailable when the assignment
-or VM state prohibits an action. The backend rechecks permission when the
-request executes.
+If no labs appear, check the selected organization and ask your instructor.
+Closed or future lab windows do not permit provisioning or connections. The
+backend rechecks membership, enrollment, assignment, ownership, and access policy
+for each action. A displayed status is not permission to bypass those checks.
 
-Deletion displays the exact VM preview before confirmation. A queued deletion
-is not complete until LabGoblin verifies that the Proxmox resource is absent.
+## Other actions and help
 
-## Connection safety
-
-The browser console uses a same-origin WebSocket. Proxmox tickets never appear
-in the browser URL. SSH terminal access remains disabled unless the deployment
-has completed its separate security prerequisites.
+Use **My machines** for permitted power actions and status refreshes. Assigned
+VM deletion is managed by your instructor. **Lab activity** shows durable jobs,
+verified results, warnings, and errors. **Account settings** changes your
+LabGoblin password. Ask your instructor or administrator for a login reset.

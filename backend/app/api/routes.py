@@ -29,7 +29,10 @@ from app.api.routers.admin_updates import router as admin_updates_router
 from app.api.routers.organizations import router as organizations_router
 from app.api.routers.classroom import router as classroom_router
 
+from app.api.routers.lab_setup import router as lab_setup_router
+
 router = APIRouter(prefix="/api")
+router.include_router(lab_setup_router)
 
 router.include_router(auth_router)
 router.include_router(health_router)
