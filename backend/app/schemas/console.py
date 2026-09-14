@@ -43,6 +43,12 @@ class RemoteProfileRequest(BaseModel):
     enabled: bool = True
 
 
+class GuestAddressObservation(BaseModel):
+    address: str
+    mac_address: str
+    matches_cloud_init: bool
+
+
 class RemoteProfileResponse(BaseModel):
     configured: bool
     protocol: str | None = None
@@ -51,6 +57,8 @@ class RemoteProfileResponse(BaseModel):
     mac_address: str | None = None
     server_identity: str | None = None
     enabled: bool = False
+    observed_addresses: list[GuestAddressObservation] = Field(default_factory=list)
+    discovery_hint: str | None = None
 
 
 class RemoteProbeRequest(BaseModel):

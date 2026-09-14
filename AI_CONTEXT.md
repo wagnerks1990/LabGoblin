@@ -193,3 +193,8 @@ migration, or console transport was changed by this rebuild.
   encrypted, write-only; RDP requires NLA/certificate pin, SSH a host-key pin.
 - Docs: docs/operations/consoles.md. Full guest sessions and browser viewports
   require server validation; do not claim these were validated in Cloud.
+- Guest profile GET performs bounded, read-only agent network discovery. Match
+  observed MACs to hypervisor adapters; label static cloud-init matches; return
+  only nonsecret address observations. Neither MAC matching nor guest assertions
+  authorize credential transmission. Never read cipassword for login recovery,
+  reset guest accounts, or silently retarget approved profiles during discovery.

@@ -1787,6 +1787,29 @@
         "title": "EnrollmentOut",
         "type": "object"
       },
+      "GuestAddressObservation": {
+        "properties": {
+          "address": {
+            "title": "Address",
+            "type": "string"
+          },
+          "mac_address": {
+            "title": "Mac Address",
+            "type": "string"
+          },
+          "matches_cloud_init": {
+            "title": "Matches Cloud Init",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "address",
+          "mac_address",
+          "matches_cloud_init"
+        ],
+        "title": "GuestAddressObservation",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -3518,6 +3541,17 @@
             "title": "Configured",
             "type": "boolean"
           },
+          "discovery_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discovery Hint"
+          },
           "enabled": {
             "default": false,
             "title": "Enabled",
@@ -3533,6 +3567,13 @@
               }
             ],
             "title": "Mac Address"
+          },
+          "observed_addresses": {
+            "items": {
+              "$ref": "#/components/schemas/GuestAddressObservation"
+            },
+            "title": "Observed Addresses",
+            "type": "array"
           },
           "port": {
             "anyOf": [

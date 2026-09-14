@@ -19,10 +19,17 @@ function PrepareGuest({ id, os, onSaved }) {
   const [mac, setMac] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [observations, setObservations] = useState([])
+  const [discoveryHint, setDiscoveryHint] = useState('Reading guest agent information…')
   const port = os === 'windows' ? 3389 : 22
   useEffect(() => {
     let current = true
-    api.get(`/vms/${id}/console/profile`).then(response => { if (current) setAddress(response.data.address || '') }).catch(() => { if (current) setError('Saved guest settings could not be loaded.') })
+    api.get(`/vms/${id}/console/profile`).then(response => {
+      if (!current) return
+      setAddress(response.data.address || '')
+      setObservations(response.data.observed_addresses || [])
+      setDiscoveryHint(response.data.discovery_hint || '')
+    }).catch(() => { if (current) { setError('Saved guest settings and agent information could not be loaded.'); setDiscoveryHint('Discovery failed.') } })
     return () => { current = false }
   }, [id])
   const check = async event => {
@@ -43,6 +50,8 @@ function PrepareGuest({ id, os, onSaved }) {
     <summary>Administrator: prepare guest access</summary>
     <p>Reserve an address for this VM in DHCP or IPAM, enable {os === 'windows' ? 'Remote Desktop with NLA' : 'SSH'} in the guest, and allow port {port} through its firewall. VNC remains available for setup.</p>
     <form onSubmit={check} className='stack'>
+      <p role='status'>{discoveryHint}</p>
+      {observations.length ? <label className='ui-field'>Discovered VM address<select value={observations.some(item => item.address === address) ? address : ''} onChange={event => { setAddress(event.target.value); setProbe(null); setConfirmed(false) }}><option value=''>Select an address</option>{observations.map(item => <option key={`${item.address}-${item.mac_address}`} value={item.address}>{item.address} · {item.mac_address}{item.matches_cloud_init ? ' · matches cloud-init' : ''}</option>)}</select></label> : null}
       <label className='ui-field'>Reserved VM IP address<input required value={address} onChange={event => { setAddress(event.target.value); setProbe(null); setConfirmed(false) }} autoComplete='off'/></label>
       <label><input type='checkbox' checked={confirmed} onChange={event => setConfirmed(event.target.checked)} required/> I verified that this address is reserved for this VM, not another VM or a management service.</label>
       <button disabled={busy || !confirmed} type='submit'>{busy ? 'Checking…' : 'Detect guest service'}</button>
@@ -122,6 +131,6 @@ export default function ConnectVmPage() {
       <p className='ui-field__hint'>Click the session to send keyboard input. Closing this page disconnects your session; it does not shut down the VM.</p>
       <div ref={screen} className='console-surface guacamole-surface' role='application' aria-label='LabGoblin remote session'/>
     </div> : null}
-    {options?.can_configure && options.operating_system !== 'unknown' ? <PrepareGuest id={id} os={options.operating_system} onSaved={refresh}/> : null}
+    {options?.vm_id === Number(id) && options.can_configure && options.operating_system !== 'unknown' ? <PrepareGuest key={id} id={id} os={options.operating_system} onSaved={refresh}/> : null}
   </section>
 }

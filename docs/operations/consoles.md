@@ -54,9 +54,15 @@ A port being open does not prove authentication or authorization will succeed.
 A platform administrator can prepare a guest entirely in the connection GUI:
 
 1. Open the VM's browser connection page. VNC can be used for guest setup.
-2. Expand **Administrator: prepare guest access**. The reported VM address is
-   filled when available. Verify a DHCP/IPAM reservation for this exact VM;
-   guest-agent addresses are suggestions, not authorization to contact a host.
+2. Expand **Administrator: prepare guest access**. LabGoblin reads current
+   QEMU guest-agent interfaces through the VM-bound Proxmox API, matches their
+   MAC addresses to the hypervisor adapters, and filters invalid/local addresses.
+   A single candidate is prefilled; multiple candidates remain an explicit GUI
+   selection. Addresses matching static cloud-init `ipconfigN` values are labeled.
+   Agent failures are shown, not replaced with a stale saved IP. Existing approved
+   profiles are retained without silently changing their destinations.
+   Verify a DHCP/IPAM reservation for this exact VM; matching guest-reported MACs
+   alone is not proof of ownership. Discovery sends no credentials to guest IPs.
 3. Confirm the reserved address and select **Detect guest service**. LabGoblin
    detects RDP/NLA and its certificate or SSH and its host key; no credentials
    are transmitted during this probe.
@@ -80,6 +86,11 @@ yet reconcile authoritative DHCP/IPAM reservations or provision guest accounts
 automatically. Proxmox VNC works without that preparation. Fully unattended
 RDP/SSH for newly created VMs requires a future trusted IPAM/account provisioning
 integration. Do not weaken identity checks to make a discovery result green.
+
+The guest agent exposes network observations, not a password-recovery mechanism.
+Cloud-init configuration may contain password hashes rather than usable login
+secrets; these are not read, returned or reused by discovery. Template cloning
+currently does not create new cloud-init credentials or reset existing accounts.
 
 An optional deployment restriction, `GUACAMOLE_ALLOWED_NETWORKS`, accepts
 comma-separated CIDRs. If supplied, even administrator-approved addresses must

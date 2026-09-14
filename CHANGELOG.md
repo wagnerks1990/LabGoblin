@@ -5,6 +5,10 @@ releases begin, material changes are recorded in pull requests and this file.
 
 ## Unreleased
 
+- Discover current guest-agent addresses for GUI connection preparation, match
+  Proxmox adapters, distinguish static cloud-init matches, and report agent failure
+  without silently using stale addresses or recovering/resetting guest passwords.
+
 - Bundle a private Guacamole gateway and an integrated browser connection page.
   Validate VM state, Proxmox VNC authentication and approved RDP/SSH service
   identities, then automatically open the best available authorized method.

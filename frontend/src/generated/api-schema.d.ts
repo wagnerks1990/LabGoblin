@@ -5619,6 +5619,15 @@ export interface components {
             /** User Id */
             user_id: number;
         };
+        /** GuestAddressObservation */
+        GuestAddressObservation: {
+            /** Address */
+            address: string;
+            /** Mac Address */
+            mac_address: string;
+            /** Matches Cloud Init */
+            matches_cloud_init: boolean;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -6178,6 +6187,8 @@ export interface components {
             address?: string | null;
             /** Configured */
             configured: boolean;
+            /** Discovery Hint */
+            discovery_hint?: string | null;
             /**
              * Enabled
              * @default false
@@ -6185,6 +6196,8 @@ export interface components {
             enabled: boolean;
             /** Mac Address */
             mac_address?: string | null;
+            /** Observed Addresses */
+            observed_addresses?: components["schemas"]["GuestAddressObservation"][];
             /** Port */
             port?: number | null;
             /** Protocol */

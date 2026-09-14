@@ -255,3 +255,7 @@ identity and VM-specific credentials are prepared in the GUI; authoritative
 IPAM/account auto-provisioning is not implemented. See
 [Browser connections](docs/operations/consoles.md) for the exact readiness and
 security contract and post-update validation.
+
+Guest setup now discovers current QEMU-agent addresses through Proxmox, matches
+VM adapters, and labels static cloud-init matches. It does not recover guest
+passwords or silently replace approved destinations.

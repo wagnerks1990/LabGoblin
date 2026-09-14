@@ -12,6 +12,7 @@ from app.services.remote_profile import (
 )
 from app.services.connection_checks import check_profile, inspect_rdp, inspect_ssh
 from app.services.secret_crypto import encrypt_secret
+from app.services.guest_discovery import discover_guest_addresses
 from app.services.rbac import get_role_name
 from app.db.tx import safe_commit
 from app.schemas.console import (
@@ -184,8 +185,16 @@ async def get_remote_profile(
 ):
     vm = _profile_admin(db, user, id, organization)
     profile = db.get(VMRemoteProfile, vm.id)
+    proxmox = ProxmoxClient(cluster_id=vm.proxmox_cluster_id)
+    capability = await inspect_console(db, vm, proxmox)
+    addresses, hint = await discover_guest_addresses(proxmox, vm, capability["_config"])
+    observations = {"observed_addresses": addresses, "discovery_hint": hint}
     if not profile:
-        return {"configured": False, "address": vm.assigned_ip}
+        return {
+            "configured": False,
+            "address": addresses[0]["address"] if len(addresses) == 1 else None,
+            **observations,
+        }
     return {
         "configured": True,
         "protocol": profile.protocol,
@@ -194,6 +203,7 @@ async def get_remote_profile(
         "mac_address": profile.mac_address,
         "server_identity": profile.server_identity,
         "enabled": profile.enabled,
+        **observations,
     }
 
 
