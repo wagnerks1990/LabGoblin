@@ -111,3 +111,8 @@
 .guacamole-surface:fullscreen { height:100vh; }
 .guacamole-surface > div { max-width:none; }
 .guacamole-surface canvas { max-width:none; }
+
+.guest-credential-reveal, .template-guest-settings { min-width: 0; }
+.guest-credential-reveal dd { margin-inline-start: 0; overflow-wrap: anywhere; }
+.guest-credential-reveal code { white-space: pre-wrap; }
+.template-guest-settings .stack { display: grid; gap: var(--space-3, 12px); }

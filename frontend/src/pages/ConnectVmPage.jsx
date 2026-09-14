@@ -21,6 +21,8 @@ function PrepareGuest({ id, os, onSaved }) {
   const [error, setError] = useState('')
   const [observations, setObservations] = useState([])
   const [discoveryHint, setDiscoveryHint] = useState('Reading guest agent information…')
+  const [templateAvailable, setTemplateAvailable] = useState(false)
+  const [useTemplate, setUseTemplate] = useState(false)
   const port = os === 'windows' ? 3389 : 22
   useEffect(() => {
     let current = true
@@ -29,6 +31,8 @@ function PrepareGuest({ id, os, onSaved }) {
       setAddress(response.data.address || '')
       setObservations(response.data.observed_addresses || [])
       setDiscoveryHint(response.data.discovery_hint || '')
+      setTemplateAvailable(Boolean(response.data.template_credentials_available))
+      setUseTemplate(Boolean(response.data.configured ? response.data.use_template_credentials : response.data.template_credentials_available))
     }).catch(() => { if (current) { setError('Saved guest settings and agent information could not be loaded.'); setDiscoveryHint('Discovery failed.') } })
     return () => { current = false }
   }, [id])
@@ -42,7 +46,7 @@ function PrepareGuest({ id, os, onSaved }) {
   const save = async event => {
     event.preventDefault(); setBusy(true); setError('')
     try {
-      await api.put(`/vms/${id}/console/profile`, { address, port, mac_address: mac, server_identity: probe.server_identity, username, password, domain, enabled: true })
+      await api.put(`/vms/${id}/console/profile`, { address, port, mac_address: mac, server_identity: probe.server_identity, username, password, domain, enabled: true, use_template_credentials: useTemplate })
       setPassword(''); setUsername(''); setDomain(''); setProbe(null); await onSaved()
     } catch (err) { setError(detail(err)) } finally { setBusy(false) }
   }
@@ -62,10 +66,12 @@ function PrepareGuest({ id, os, onSaved }) {
       <label className='ui-field'>VM network adapter<select required value={mac} onChange={event => setMac(event.target.value)}>{probe.mac_addresses.map(item => <option key={item}>{item}</option>)}</select></label>
       <label className='ui-field'>Detected server identity<textarea readOnly value={probe.server_identity}/></label>
       <p>Verify this identity against the guest before approving it. A changed identity will block future connections.</p>
-      <label className='ui-field'>VM-specific guest username<input required autoComplete='off' value={username} onChange={event => setUsername(event.target.value)}/></label>
+      {templateAvailable ? <label><input type='checkbox' checked={useTemplate} onChange={event => { setUseTemplate(event.target.checked); setPassword(''); setUsername(''); setDomain('') }}/> Use the guest login saved in template settings</label> : null}
+      {!useTemplate ? <><label className='ui-field'>VM-specific guest username<input required autoComplete='off' value={username} onChange={event => setUsername(event.target.value)}/></label>
       <label className='ui-field'>Guest password<input required type='password' autoComplete='new-password' value={password} onChange={event => setPassword(event.target.value)}/></label>
       {os === 'windows' ? <label className='ui-field'>Domain (optional)<input value={domain} onChange={event => setDomain(event.target.value)}/></label> : null}
-      <p>Use an account dedicated to this VM. Credentials are encrypted on the server and are never returned to students.</p>
+      </> : null}
+      <p>Automatic connections keep credentials on the server. Template settings separately control whether assigned students can reveal the template lab login.</p>
       <button disabled={busy} type='submit'>Approve identity and enable guest access</button>
     </form> : null}
   </details>

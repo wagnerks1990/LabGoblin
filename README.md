@@ -1,5 +1,8 @@
 # LabGoblin
 
+Template guest logins can now be encrypted in template settings, inherited for automatic browser connections, and explicitly shared with authorized students through an audited, temporary reveal. See [console access](docs/operations/consoles.md).
+
+
 **Virtual Lab Provisioning & Management**  
 **Real Skills. Virtual Machines.**
 

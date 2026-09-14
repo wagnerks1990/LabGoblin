@@ -1,11 +1,10 @@
 import ipaddress
-import json
 import re
 
 from fastapi import HTTPException
 from app.core.config import settings
 from app.models.models import VMRemoteProfile
-from app.services.secret_crypto import decrypt_secret
+from app.services.template_credentials import connection_credentials
 
 
 def validate_address(address):
@@ -76,7 +75,7 @@ def profile_parameters(db, vm, config, os_name):
             409,
             "VM network identity changed. Ask an administrator to review the connection profile.",
         )
-    credentials = json.loads(decrypt_secret(profile.encrypted_credentials))
+    credentials = connection_credentials(db, vm, profile)
     parameters = {
         "hostname": profile.address,
         "port": str(profile.port),

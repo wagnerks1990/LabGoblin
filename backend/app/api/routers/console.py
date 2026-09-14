@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 import json
 from app.models.models import VMRemoteProfile, AuditLog
@@ -13,6 +13,8 @@ from app.services.remote_profile import (
 from app.services.connection_checks import check_profile, inspect_rdp, inspect_ssh
 from app.services.secret_crypto import encrypt_secret
 from app.services.guest_discovery import discover_guest_addresses
+from app.services.template_credentials import template_for_vm, decode_credentials
+from app.schemas.template_credentials import GuestCredentialReveal
 from app.services.rbac import get_role_name
 from app.db.tx import safe_commit
 from app.schemas.console import (
@@ -35,6 +37,39 @@ from app.services.organization_access import (
 )
 
 router = APIRouter()
+
+
+@router.post("/vms/{id}/guest-credentials/reveal", response_model=GuestCredentialReveal)
+def reveal_guest_credentials(
+    id: int,
+    response: Response,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    organization: OrganizationContext = Depends(get_current_organization),
+):
+    # Explicit user-requested disclosure, never included in VM/template lists.
+    response.headers["Cache-Control"] = "no-store, private"
+    response.headers["Pragma"] = "no-cache"
+    vm = _get_vm_for_user(db, user, id, organization, "view")
+    credential = template_for_vm(db, vm)
+    if not credential.student_visible:
+        raise HTTPException(
+            403,
+            "The instructor has not enabled guest credential sharing for this template.",
+        )
+    data = decode_credentials(credential.encrypted_credentials)
+    db.add(
+        AuditLog(
+            organization_id=organization.id,
+            actor_id=user.id,
+            action="guest_credentials_revealed",
+            target_type="student_vm",
+            target_id=str(vm.id),
+            message="Template lab credentials revealed to an authorized VM user",
+        )
+    )
+    safe_commit(db)
+    return data
 
 
 def _get_vm_for_user(
@@ -188,7 +223,17 @@ async def get_remote_profile(
     proxmox = ProxmoxClient(cluster_id=vm.proxmox_cluster_id)
     capability = await inspect_console(db, vm, proxmox)
     addresses, hint = await discover_guest_addresses(proxmox, vm, capability["_config"])
-    observations = {"observed_addresses": addresses, "discovery_hint": hint}
+    try:
+        template_credential = template_for_vm(db, vm)
+        template_available = template_credential.auto_connect
+    except HTTPException:
+        template_available = False
+    observations = {
+        "observed_addresses": addresses,
+        "discovery_hint": hint,
+        "template_credentials_available": template_available,
+        "use_template_credentials": bool(profile and not profile.encrypted_credentials),
+    }
     if not profile:
         return {
             "configured": False,
@@ -285,7 +330,13 @@ async def save_remote_profile(
         profile = VMRemoteProfile(vm_id=vm.id, revision=0)
         db.add(profile)
     password = payload.password.get_secret_value()
-    if not payload.username or not password:
+    if payload.use_template_credentials:
+        if not template_for_vm(db, vm).auto_connect:
+            raise HTTPException(
+                409,
+                "Enable automatic connections in template credential settings first.",
+            )
+    elif not payload.username or not password:
         raise HTTPException(
             422, "A VM-specific guest username and password are required."
         )
@@ -296,13 +347,17 @@ async def save_remote_profile(
     )
     profile.enabled = payload.enabled
     profile.revision += 1
-    profile.encrypted_credentials = encrypt_secret(
-        json.dumps(
-            {
-                "username": payload.username,
-                "password": password,
-                "domain": payload.domain,
-            }
+    profile.encrypted_credentials = (
+        ""
+        if payload.use_template_credentials
+        else encrypt_secret(
+            json.dumps(
+                {
+                    "username": payload.username,
+                    "password": password,
+                    "domain": payload.domain,
+                }
+            )
         )
     )
     vm.operating_system = os_name
@@ -327,4 +382,6 @@ async def save_remote_profile(
         "mac_address": profile.mac_address,
         "server_identity": profile.server_identity,
         "enabled": profile.enabled,
+        "use_template_credentials": payload.use_template_credentials,
+        "template_credentials_available": payload.use_template_credentials,
     }

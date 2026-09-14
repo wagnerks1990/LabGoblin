@@ -205,6 +205,17 @@ class VMTemplate(Base):
     enabled = Column(Boolean, default=True)
 
 
+class TemplateGuestCredential(Base):
+    __tablename__ = "template_guest_credentials"
+    template_id = Column(Integer, ForeignKey("vm_templates.id"), primary_key=True)
+    encrypted_credentials = Column(Text, nullable=False)
+    auto_connect = Column(Boolean, nullable=False, default=True, server_default="true")
+    student_visible = Column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    revision = Column(Integer, nullable=False, default=1, server_default="1")
+
+
 class Permission(Base):
     __tablename__ = "permissions"
     __table_args__ = (

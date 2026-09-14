@@ -83,8 +83,12 @@
   create the fixed least-privilege `labgoblin@pve` service identity. Never
   persist or return the root password, create a root token, or overwrite a
   conflicting service user or role.
-- Never expose VM credentials to frontend code.
-- Never expose SSH credentials to frontend code.
+- Never include guest credentials in VM/template lists, URLs, storage, or logs.
+  Explicit user-authorized exception: an audited, no-store POST reveal may return
+  the template lab login to a currently authorized VM user when template sharing
+  is enabled. Automatic connections keep secrets server-side. See consoles.md.
+- Never expose infrastructure SSH credentials or private keys to frontend code.
+  The explicit template lab-login reveal exception above also covers lab SSH passwords.
 - Never expose Guacamole credentials to frontend code.
 - Never commit `.env` files.
 - Never commit secrets, private keys, certificates, passwords, tokens, local databases, or generated runtime artifacts.
@@ -166,7 +170,7 @@
 - Proxmox mutations are durable jobs with idempotency keys and persisted task identifiers.
 - Database record removal and Proxmox resource deletion are separate, explicitly named operations.
 - Destructive operations require a preview, an authorization check, an audit record, and a verified result.
-- Proxmox, console, SSH, database, and AI provider secrets never appear in URLs, logs, browser storage, or API responses.
+- Proxmox, gateway, infrastructure SSH, database, and AI provider secrets never appear in URLs, logs, browser storage, or API responses. Template lab logins have only the audited reveal exception above.
 - AI features begin read-only. AI-generated mutations require a human-approved execution plan.
 - Configuration belongs in the database when it is operational state. Bootstrap secrets belong in a secret store or protected environment file.
 - OpenAPI is the frontend/backend contract. Do not hand-code a second incompatible client contract.

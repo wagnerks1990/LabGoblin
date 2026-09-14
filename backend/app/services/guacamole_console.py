@@ -24,6 +24,7 @@ from app.services.guacd_protocol import (
 from app.services.proxmox import ProxmoxClient
 from app.services.remote_capabilities import guest_os
 from app.services.remote_profile import profile_parameters
+from app.services.template_credentials import template_connection_revision
 from app.services.rfb_auth import authenticate_upstream, vnc_response
 from app.services.session_service import SessionService
 
@@ -212,6 +213,12 @@ class GuacamoleConsole:
                         raise HTTPException(
                             403, "Connection method is disabled for this VM."
                         )
+                revision = profile.revision if profile else None
+                credential_revision = (
+                    template_connection_revision(self.db, vm, profile)
+                    if profile
+                    else None
+                )
                 launch = svc.create_launch(
                     user, vm, f"GUAC_{protocol.upper()}", "launching"
                 )
@@ -245,7 +252,6 @@ class GuacamoleConsole:
                     )
                 # Local tunnel identifier, never the joinable guacd connection id.
                 await websocket.send_text(encode_instruction("", str(uuid.uuid4())))
-                revision = profile.revision if profile else None
 
                 async def to_browser():
                     active = False
@@ -301,6 +307,8 @@ class GuacamoleConsole:
                                 not current
                                 or not current.enabled
                                 or current.revision != revision
+                                or template_connection_revision(self.db, vm, current)
+                                != credential_revision
                             ):
                                 await websocket.close(
                                     code=1008, reason="Connection settings changed"

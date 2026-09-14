@@ -1810,6 +1810,34 @@
         "title": "GuestAddressObservation",
         "type": "object"
       },
+      "GuestCredentialReveal": {
+        "properties": {
+          "domain": {
+            "title": "Domain",
+            "type": "string"
+          },
+          "password": {
+            "title": "Password",
+            "type": "string"
+          },
+          "source": {
+            "default": "template",
+            "title": "Source",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password",
+          "domain"
+        ],
+        "title": "GuestCredentialReveal",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -3490,6 +3518,7 @@
             "type": "string"
           },
           "password": {
+            "default": "",
             "format": "password",
             "maxLength": 4096,
             "title": "Password",
@@ -3507,7 +3536,13 @@
             "title": "Server Identity",
             "type": "string"
           },
+          "use_template_credentials": {
+            "default": false,
+            "title": "Use Template Credentials",
+            "type": "boolean"
+          },
           "username": {
+            "default": "",
             "maxLength": 128,
             "title": "Username",
             "type": "string"
@@ -3517,9 +3552,7 @@
           "address",
           "port",
           "mac_address",
-          "server_identity",
-          "username",
-          "password"
+          "server_identity"
         ],
         "title": "RemoteProfileRequest",
         "type": "object"
@@ -3607,6 +3640,16 @@
               }
             ],
             "title": "Server Identity"
+          },
+          "template_credentials_available": {
+            "default": false,
+            "title": "Template Credentials Available",
+            "type": "boolean"
+          },
+          "use_template_credentials": {
+            "default": false,
+            "title": "Use Template Credentials",
+            "type": "boolean"
           }
         },
         "required": [
@@ -4110,6 +4153,87 @@
           "source_vmid"
         ],
         "title": "TemplateCreateRequest",
+        "type": "object"
+      },
+      "TemplateCredentialPolicy": {
+        "properties": {
+          "auto_connect": {
+            "title": "Auto Connect",
+            "type": "boolean"
+          },
+          "student_visible": {
+            "title": "Student Visible",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "auto_connect",
+          "student_visible"
+        ],
+        "title": "TemplateCredentialPolicy",
+        "type": "object"
+      },
+      "TemplateCredentialStatus": {
+        "properties": {
+          "auto_connect": {
+            "title": "Auto Connect",
+            "type": "boolean"
+          },
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "student_visible": {
+            "title": "Student Visible",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "auto_connect",
+          "student_visible",
+          "configured"
+        ],
+        "title": "TemplateCredentialStatus",
+        "type": "object"
+      },
+      "TemplateCredentialWrite": {
+        "properties": {
+          "auto_connect": {
+            "default": true,
+            "title": "Auto Connect",
+            "type": "boolean"
+          },
+          "domain": {
+            "default": "",
+            "maxLength": 128,
+            "title": "Domain",
+            "type": "string"
+          },
+          "password": {
+            "format": "password",
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string",
+            "writeOnly": true
+          },
+          "student_visible": {
+            "default": false,
+            "title": "Student Visible",
+            "type": "boolean"
+          },
+          "username": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "TemplateCredentialWrite",
         "type": "object"
       },
       "TemplateResponse": {
@@ -11057,6 +11181,260 @@
         "summary": "Patch Template"
       }
     },
+    "/api/admin/templates/{id}/guest-credentials": {
+      "delete": {
+        "operationId": "remove_guest_credentials_api_admin_templates__id__guest_credentials_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateCredentialStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Remove Guest Credentials"
+      },
+      "get": {
+        "operationId": "guest_credential_status_api_admin_templates__id__guest_credentials_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateCredentialStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Guest Credential Status"
+      },
+      "patch": {
+        "operationId": "change_guest_credential_policy_api_admin_templates__id__guest_credentials_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateCredentialPolicy"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateCredentialStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Change Guest Credential Policy"
+      },
+      "put": {
+        "operationId": "save_guest_credentials_api_admin_templates__id__guest_credentials_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateCredentialWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateCredentialStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Save Guest Credentials"
+      }
+    },
     "/api/admin/troubleshooting/recent": {
       "get": {
         "operationId": "recent_issues_api_admin_troubleshooting_recent_get",
@@ -13834,6 +14212,66 @@
           }
         ],
         "summary": "Delete Vm Preview"
+      }
+    },
+    "/api/vms/{id}/guest-credentials/reveal": {
+      "post": {
+        "operationId": "reveal_guest_credentials_api_vms__id__guest_credentials_reveal_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestCredentialReveal"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Reveal Guest Credentials"
       }
     },
     "/api/vms/{id}/reboot": {
@@ -20222,6 +20660,260 @@
         "summary": "Patch Template"
       }
     },
+    "/v1/api/admin/templates/{id}/guest-credentials": {
+      "delete": {
+        "operationId": "remove_guest_credentials_v1_api_admin_templates__id__guest_credentials_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateCredentialStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Remove Guest Credentials"
+      },
+      "get": {
+        "operationId": "guest_credential_status_v1_api_admin_templates__id__guest_credentials_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateCredentialStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Guest Credential Status"
+      },
+      "patch": {
+        "operationId": "change_guest_credential_policy_v1_api_admin_templates__id__guest_credentials_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateCredentialPolicy"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateCredentialStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Change Guest Credential Policy"
+      },
+      "put": {
+        "operationId": "save_guest_credentials_v1_api_admin_templates__id__guest_credentials_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateCredentialWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateCredentialStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Save Guest Credentials"
+      }
+    },
     "/v1/api/admin/troubleshooting/recent": {
       "get": {
         "operationId": "recent_issues_v1_api_admin_troubleshooting_recent_get",
@@ -22999,6 +23691,66 @@
           }
         ],
         "summary": "Delete Vm Preview"
+      }
+    },
+    "/v1/api/vms/{id}/guest-credentials/reveal": {
+      "post": {
+        "operationId": "reveal_guest_credentials_v1_api_vms__id__guest_credentials_reveal_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Organization-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Organization-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestCredentialReveal"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Reveal Guest Credentials"
       }
     },
     "/v1/api/vms/{id}/reboot": {

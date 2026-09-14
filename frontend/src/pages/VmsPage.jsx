@@ -6,6 +6,7 @@ import { CollectionToolbar, MetricStrip, ViewToggle, WorkspaceHeading } from '..
 import NavIcon from '../components/navigation/NavIcon'
 import { selectMachines } from '../state/workspaceCollections'
 import api from '../services/api'
+import GuestCredentialReveal from '../components/workflows/GuestCredentialReveal'
 
 const terminalStates = new Set(['succeeded', 'failed', 'cancelled'])
 const errorDetail = error => {
@@ -105,7 +106,7 @@ export default function VmsPage({ setMessage }) {
           {running ? <Link className='btn btn-connection' to={`/console/${vm.id}`}>Connect in browser</Link>
             : stopped ? <button type='button' disabled={working} onClick={() => act(vm, 'start')}>Start VM</button>
               : <p className='muted'>A connection will be available when this VM is running.</p>}
-          <details style={{ marginTop: 14 }}>
+          <GuestCredentialReveal key={vm.id} vmId={vm.id}/><details style={{ marginTop: 14 }}>
             <summary>More actions and details</summary>
             <dl>
               <dt>VMID</dt><dd>{vm.vmid}</dd>

@@ -146,3 +146,22 @@ or production transport validation are claimed.
 References: [Apache Guacamole server](https://github.com/apache/guacamole-server),
 [protocol](https://guacamole.apache.org/doc/gug/guacamole-protocol.html), and
 [connection security parameters](https://guacamole.apache.org/doc/gug/configuring-guacamole.html).
+
+### Template lab logins
+
+Organization administrators can save an existing guest username, password, and
+optional domain in **Templates → Guest credentials**. These encrypted settings
+have separate switches for automatic connections and student sharing. Saving
+credentials does not create or reset accounts inside a template or its clones.
+A VM profile may inherit this login or retain a VM-specific override. Reserved
+address, adapter, and pinned host identity validation still apply before sending
+credentials. Template changes revoke inherited sessions on the profile check.
+
+When sharing is enabled, **Show lab login** on an assigned VM makes an audited,
+no-store POST request that rechecks current organization, ownership, enrollment,
+assignment, and run access. The revealed lab account hides after 30 seconds or
+when the page becomes hidden. It is never stored in browser storage or returned
+by VM/template lists. This explicit sharing feature does not expose Proxmox,
+gateway, infrastructure SSH credentials, private keys, or VM-specific overrides.
+Shared template accounts are shared across clones; use separate template accounts
+or VM overrides where separate guest identities are required.

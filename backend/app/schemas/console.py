@@ -37,8 +37,9 @@ class RemoteProfileRequest(BaseModel):
     port: int = Field(ge=1, le=65535)
     mac_address: str = Field(max_length=17)
     server_identity: str = Field(max_length=8192)
-    username: str = Field(max_length=128)
-    password: SecretStr = Field(max_length=4096)
+    username: str = Field(default="", max_length=128)
+    password: SecretStr = Field(default=SecretStr(""), max_length=4096)
+    use_template_credentials: bool = False
     domain: str = Field(default="", max_length=128)
     enabled: bool = True
 
@@ -59,6 +60,8 @@ class RemoteProfileResponse(BaseModel):
     enabled: bool = False
     observed_addresses: list[GuestAddressObservation] = Field(default_factory=list)
     discovery_hint: str | None = None
+    template_credentials_available: bool = False
+    use_template_credentials: bool = False
 
 
 class RemoteProbeRequest(BaseModel):
