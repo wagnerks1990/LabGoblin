@@ -7,7 +7,7 @@ export function matchesQuery(query, values) {
 }
 export function selectMachines(rows, { query = '', status = '', sort = 'name' } = {}) {
   return rows.filter(vm => (!status || normalize(vm.status) === normalize(status)) &&
-    matchesQuery(query, [vm.vm_name, vm.vmid, vm.proxmox_node, vm.assigned_ip]))
+    matchesQuery(query, [vm.vm_name, vm.vmid, vm.proxmox_node, vm.assigned_ip, vm.hostname, ...(vm.observed_addresses || []).map(item => item.address)]))
     .sort((a, b) => sort === 'vmid' ? Number(a.vmid) - Number(b.vmid) : String(a.vm_name || '').localeCompare(String(b.vm_name || '')))
 }
 export function selectOperations(rows, { query = '', filter = 'all', action = '' } = {}) {

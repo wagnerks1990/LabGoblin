@@ -4,6 +4,7 @@ import api from '../services/api'
 import { listMyAssignments } from '../services/classroomApi'
 import { LoadingState, ErrorState } from '../components/workflows/WorkflowState'
 import WorkflowStatus from '../components/workflows/WorkflowStatus'
+import VmResources from '../components/workflows/VmResources'
 import GuestCredentialReveal from '../components/workflows/GuestCredentialReveal'
 
 const detail = error => typeof error?.response?.data?.detail === 'string' ? error.response.data.detail : 'Your lab resources could not be loaded. Please try again.'
@@ -15,13 +16,16 @@ export default function StudentHomePage({ user }) {
   const [query, setQuery] = useState(''); const [busy, setBusy] = useState({})
   const [messages, setMessages] = useState({}); const [jobs, setJobs] = useState({})
   const mounted = useRef(true)
+  const refreshing = useRef(false)
   const load = useCallback(async (quiet = false) => {
+    if (refreshing.current) return
+    refreshing.current = true
     if (!quiet) setLoading(true)
     try {
       const [assigned, machines] = await Promise.all([listMyAssignments(), api.get('/vms')])
       if (mounted.current) { setRows(assigned); setVms(machines.data || []); setError('') }
     } catch (err) { if (mounted.current) setError(detail(err)) }
-    finally { if (mounted.current) setLoading(false) }
+    finally { refreshing.current = false; if (mounted.current) setLoading(false) }
   }, [])
   useEffect(() => { mounted.current = true; load(); return () => { mounted.current = false } }, [load])
   useEffect(() => {
@@ -78,7 +82,7 @@ export default function StudentHomePage({ user }) {
           {(job?.warnings || []).map((warning,index) => <p className='ui-alert ui-alert--warning' key={index}>Completed with warning: {warning.message}</p>)}
           {job ? <Link to='/operations'>View preparation progress</Link> : null}
           {row.access_open && vm ? <GuestCredentialReveal key={vm.id} vmId={vm.id}/> : null}
-          {vm ? <details><summary>Machine details</summary><p>{vm.vm_name}</p><p>Address: {vm.assigned_ip || 'Not reported yet'}</p><Link to='/vms'>More machine actions</Link></details> : null}
+          {vm ? <details><summary>Machine details</summary><p>{vm.vm_name}</p><VmResources vm={vm}/><Link to='/vms'>More machine actions</Link></details> : null}
         </article>
       })}</div>
     </section>)}

@@ -336,3 +336,11 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monos
 @media (forced-colors: active) {
   .badge, .status-badge, .ui-status-badge, .msg, .ui-alert { border-color: currentColor; }
 }
+
+.vm-resources { margin-block: var(--space-3, 12px); min-width: 0; }
+.vm-resources .resource-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.vm-resources .resource-facts strong, .vm-resource-details dd { overflow-wrap: anywhere; }
+.vm-resource-details dd { margin: 0 0 10px; }
+.connection-prepare { margin-block: 16px; }
+.connection-prepare input, .connection-prepare textarea, .connection-prepare select { max-width: 100%; }
+.connection-prepare textarea { overflow-wrap: anywhere; }

@@ -5705,6 +5705,10 @@ export interface components {
             can_configure: boolean;
             /** Hint */
             hint: string;
+            /** Method Hints */
+            method_hints?: {
+                [key: string]: string;
+            };
             /** Native Rdp */
             native_rdp: boolean;
             /** Operating System */
@@ -6919,12 +6923,18 @@ export interface components {
             created_at?: string | null;
             /** Default Username */
             default_username?: string | null;
+            /** Discovery Hint */
+            discovery_hint?: string | null;
             /** Hostname */
             hostname?: string | null;
             /** Id */
             id: number;
             /** Message */
             message?: string | null;
+            /** Observed Addresses */
+            observed_addresses?: components["schemas"]["GuestAddressObservation"][];
+            /** Observed At */
+            observed_at?: string | null;
             /** Operating System */
             operating_system?: string | null;
             /** Operation Id */
@@ -6935,6 +6945,9 @@ export interface components {
             proxmox_node: string;
             /** Rdp Enabled */
             rdp_enabled?: boolean | null;
+            /** Resource Warning */
+            resource_warning?: string | null;
+            resources?: components["schemas"]["VMResources"] | null;
             /** Spice Enabled */
             spice_enabled?: boolean | null;
             /** Ssh Auth Method */
@@ -6955,6 +6968,13 @@ export interface components {
             /** Vmid */
             vmid: number;
         };
+        /** VMDisk */
+        VMDisk: {
+            /** Capacity Bytes */
+            capacity_bytes?: number | null;
+            /** Device */
+            device: string;
+        };
         /** VMOperationResponse */
         VMOperationResponse: {
             /** Message */
@@ -6965,6 +6985,31 @@ export interface components {
             state: string;
             /** Vm Id */
             vm_id: number;
+        };
+        /** VMResources */
+        VMResources: {
+            /** Cpu Count */
+            cpu_count?: number | null;
+            /** Cpu Usage Percent */
+            cpu_usage_percent?: number | null;
+            /** Disk Capacity Bytes */
+            disk_capacity_bytes?: number | null;
+            /** Disk Read Bytes */
+            disk_read_bytes?: number | null;
+            /** Disk Written Bytes */
+            disk_written_bytes?: number | null;
+            /** Disks */
+            disks?: components["schemas"]["VMDisk"][];
+            /** Memory Bytes */
+            memory_bytes?: number | null;
+            /** Memory Used Bytes */
+            memory_used_bytes?: number | null;
+            /** Network Received Bytes */
+            network_received_bytes?: number | null;
+            /** Network Sent Bytes */
+            network_sent_bytes?: number | null;
+            /** Uptime Seconds */
+            uptime_seconds?: number | null;
         };
         /** VMResponse */
         VMResponse: {
@@ -6992,16 +7037,25 @@ export interface components {
             created_at?: string | null;
             /** Default Username */
             default_username?: string | null;
+            /** Discovery Hint */
+            discovery_hint?: string | null;
             /** Hostname */
             hostname?: string | null;
             /** Id */
             id: number;
+            /** Observed Addresses */
+            observed_addresses?: components["schemas"]["GuestAddressObservation"][];
+            /** Observed At */
+            observed_at?: string | null;
             /** Operating System */
             operating_system?: string | null;
             /** Proxmox Node */
             proxmox_node: string;
             /** Rdp Enabled */
             rdp_enabled?: boolean | null;
+            /** Resource Warning */
+            resource_warning?: string | null;
+            resources?: components["schemas"]["VMResources"] | null;
             /** Spice Enabled */
             spice_enabled?: boolean | null;
             /** Ssh Auth Method */

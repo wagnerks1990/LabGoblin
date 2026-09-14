@@ -173,33 +173,57 @@ async def connection_options(
         if not capability["running"]
         else "VNC uses the Proxmox console. RDP and SSH require an approved VM address and guest login; administrators can prepare them here.",
     }
+    method_hints = {
+        "vnc": "Ready to connect."
+        if result["vnc"]
+        else "VNC is disabled by VM or lab policy.",
+        "rdp": "RDP setup is incomplete. An administrator must approve this VM's address and guest login using Prepare guest access above the console.",
+        "ssh": "SSH setup is incomplete. An administrator must approve this VM's address and guest login using Prepare guest access above the console.",
+    }
     profile = db.get(VMRemoteProfile, vm.id)
+    if profile and not profile.enabled:
+        method_hints[profile.protocol] = (
+            "The saved guest connection is disabled. Ask an administrator to enable it."
+        )
     if profile and profile.enabled and capability["running"]:
         config = capability["_config"]
         try:
             profile_parameters(db, vm, config, capability["operating_system"])
             ready, hint = await check_profile(profile)
-            result["hint"] = hint
+            method_hints[profile.protocol] = hint
             if profile.protocol == "rdp":
                 result["rdp"] = ready and allowed("rdp")
                 result["native_rdp"] = result["rdp"]
             elif profile.protocol == "ssh":
-                result["terminal"] = ready and vm.ssh_enabled and allowed("terminal")
+                result["terminal"] = bool(
+                    ready and vm.ssh_enabled and allowed("terminal")
+                )
         except HTTPException as exc:
-            result["hint"] = str(exc.detail)
+            method_hints[profile.protocol] = str(exc.detail)
+    for method, operation in [("rdp", "rdp"), ("ssh", "terminal")]:
+        if not allowed(operation):
+            method_hints[method] = (
+                "This connection method is disabled by VM or lab access policy. Ask your instructor to review it."
+            )
     if result["vnc"]:
         from app.services.connection_checks import check_proxmox_vnc
 
         result["vnc"] = await check_proxmox_vnc(proxmox, vm)
         if not result["vnc"]:
-            result["hint"] = (
+            method_hints["vnc"] = (
                 "Proxmox VNC authentication failed. Ask an administrator to check VM.Console permission and cluster connectivity."
             )
+    if not capability["running"]:
+        method_hints = {method: "Start the VM to connect." for method in method_hints}
     from app.services.guacamole import check_guacamole_reachable
 
     gateway_ready, gateway_hint = await check_guacamole_reachable()
     if not gateway_ready:
-        result.update(vnc=False, rdp=False, terminal=False, hint=gateway_hint)
+        result.update(vnc=False, rdp=False, terminal=False)
+        method_hints = {method: gateway_hint for method in method_hints}
+    result["method_hints"] = method_hints
+    guest_method = "rdp" if capability["operating_system"] == "windows" else "ssh"
+    result["hint"] = method_hints[guest_method]
     return result
 
 
@@ -362,6 +386,7 @@ async def save_remote_profile(
     )
     vm.operating_system = os_name
     vm.rdp_enabled = protocol == "rdp" and payload.enabled
+    vm.ssh_enabled = protocol == "ssh" and payload.enabled
     vm.access_protocols = "novnc," + protocol
     db.add(
         AuditLog(

@@ -1469,6 +1469,13 @@
             "title": "Hint",
             "type": "string"
           },
+          "method_hints": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Method Hints",
+            "type": "object"
+          },
           "native_rdp": {
             "title": "Native Rdp",
             "type": "boolean"
@@ -5053,6 +5060,17 @@
             ],
             "title": "Default Username"
           },
+          "discovery_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discovery Hint"
+          },
           "hostname": {
             "anyOf": [
               {
@@ -5078,6 +5096,25 @@
               }
             ],
             "title": "Message"
+          },
+          "observed_addresses": {
+            "items": {
+              "$ref": "#/components/schemas/GuestAddressObservation"
+            },
+            "title": "Observed Addresses",
+            "type": "array"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
           },
           "operating_system": {
             "anyOf": [
@@ -5126,6 +5163,27 @@
               }
             ],
             "title": "Rdp Enabled"
+          },
+          "resource_warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Warning"
+          },
+          "resources": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VMResources"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "spice_enabled": {
             "anyOf": [
@@ -5206,6 +5264,30 @@
         "title": "VMCreateResponse",
         "type": "object"
       },
+      "VMDisk": {
+        "properties": {
+          "capacity_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity Bytes"
+          },
+          "device": {
+            "title": "Device",
+            "type": "string"
+          }
+        },
+        "required": [
+          "device"
+        ],
+        "title": "VMDisk",
+        "type": "object"
+      },
       "VMOperationResponse": {
         "properties": {
           "message": {
@@ -5232,6 +5314,129 @@
           "message"
         ],
         "title": "VMOperationResponse",
+        "type": "object"
+      },
+      "VMResources": {
+        "properties": {
+          "cpu_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cpu Count"
+          },
+          "cpu_usage_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cpu Usage Percent"
+          },
+          "disk_capacity_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disk Capacity Bytes"
+          },
+          "disk_read_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disk Read Bytes"
+          },
+          "disk_written_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disk Written Bytes"
+          },
+          "disks": {
+            "items": {
+              "$ref": "#/components/schemas/VMDisk"
+            },
+            "title": "Disks",
+            "type": "array"
+          },
+          "memory_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory Bytes"
+          },
+          "memory_used_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory Used Bytes"
+          },
+          "network_received_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Network Received Bytes"
+          },
+          "network_sent_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Network Sent Bytes"
+          },
+          "uptime_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uptime Seconds"
+          }
+        },
+        "title": "VMResources",
         "type": "object"
       },
       "VMResponse": {
@@ -5370,6 +5575,17 @@
             ],
             "title": "Default Username"
           },
+          "discovery_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discovery Hint"
+          },
           "hostname": {
             "anyOf": [
               {
@@ -5384,6 +5600,25 @@
           "id": {
             "title": "Id",
             "type": "integer"
+          },
+          "observed_addresses": {
+            "items": {
+              "$ref": "#/components/schemas/GuestAddressObservation"
+            },
+            "title": "Observed Addresses",
+            "type": "array"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
           },
           "operating_system": {
             "anyOf": [
@@ -5410,6 +5645,27 @@
               }
             ],
             "title": "Rdp Enabled"
+          },
+          "resource_warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Warning"
+          },
+          "resources": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VMResources"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "spice_enabled": {
             "anyOf": [
