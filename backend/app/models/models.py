@@ -729,3 +729,12 @@ class ProxmoxHostAccess(Base):
     last_checked_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+
+class LabSetupReceipt(Base):
+    __tablename__ = "lab_setup_receipts"
+    request_id = Column(String(36), primary_key=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)
+    actor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    run_id = Column(Integer, ForeignKey("lab_runs.id"), nullable=False)
+    fingerprint = Column(String(64), nullable=False)

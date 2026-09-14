@@ -1,5 +1,8 @@
 # Changelog
 
+Guided lab setup now combines class, pool, roster/accounts, assignments, and access scheduling in an editable wizard. Students land on a simplified My labs home with direct browser connections. See [instructor setup](docs/user-guide/instructor-workflow.md).
+
+
 Template guest logins can now be encrypted in template settings, inherited for automatic browser connections, and explicitly shared with authorized students through an audited, temporary reveal. See [console access](docs/operations/consoles.md).
 
 

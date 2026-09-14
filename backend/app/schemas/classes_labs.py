@@ -140,3 +140,8 @@ class LabAssignmentOut(BaseModel):
     template_name: str | None = None
     username: str | None = None
     can_provision: bool = False
+    access_open: bool = False
+    instructions: str | None = None
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    run_state: str | None = None

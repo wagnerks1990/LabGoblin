@@ -58,7 +58,7 @@ export const navigationGroups = [
 export function visibleNavigation(access) {
   return navigationGroups
     .filter(group => !group.visible || group.visible(access))
-    .map(group => ({ ...group, items: group.items.filter(item => item.visible(access)) }))
+    .map(group => ({ ...group, items: group.items.filter(item => item.visible(access)).map(item => !access.tenantInstructor && !access.platformAdmin ? { ...item, label: ({ overview: 'My labs', vms: 'My machines', create: 'Start a lab', operations: 'Lab activity' })[item.id] || item.label } : item) }))
     .filter(group => group.items.length > 0)
 }
 

@@ -128,9 +128,29 @@ def _assignment_out(db: Session, row: LabAssignment) -> LabAssignment:
     row.lab_name = lab.name if lab else None
     row.template_name = template.name if template else None
     row.username = user.username if user else None
-    row.can_provision = bool(
-        run and assignment_effectively_open(row, run) and row.student_vm_id is None
+    enrollment = (
+        db.query(Enrollment)
+        .filter(
+            Enrollment.class_id == lab.class_id,
+            Enrollment.user_id == row.user_id,
+            Enrollment.is_active.is_(True),
+        )
+        .first()
+        if lab
+        else None
     )
+    row.access_open = bool(run and enrollment and assignment_effectively_open(row, run))
+    row.can_provision = bool(
+        row.access_open
+        and template
+        and template.enabled
+        and row.student_vm_id is None
+        and row.status == "assigned"
+    )
+    row.instructions = lab.description if lab else None
+    row.starts_at = run.starts_at if run else None
+    row.ends_at = run.ends_at if run else None
+    row.run_state = run.state if run else None
     return row
 
 

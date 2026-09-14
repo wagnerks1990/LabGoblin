@@ -1,24 +1,41 @@
 # Instructor workflow
 
-The teaching workspace follows the classroom lifecycle rather than exposing
-raw infrastructure controls.
+Open **Classes & labs → Create a lab**. The guided setup combines the records
+needed for a working classroom into five steps:
 
-1. Create or select a class.
-2. Enroll active organization members as students.
-3. Create a lab blueprint using an enabled pool and approved access policy.
-4. Create and schedule or activate a lab run.
-5. Create assignments for the active roster.
-6. Monitor assignments, VMs, sessions, events, and durable operations.
-7. End the run only after reviewing its destructive preview.
+1. **Lab & class:** name the lab, write student instructions, and create or reuse a class.
+2. **Machines:** select an imported template to create a dedicated pool automatically,
+   or reuse an enabled pool. Templates are prepared by administrators beforehand.
+3. **Students:** select active student members. Platform administrators can also add
+   new student login accounts here; passwords must be changed at first sign-in.
+4. **Access & schedule:** choose the number of machines per student, permitted browser
+   methods, and a draft, scheduled, or open-now state.
+5. **Review:** confirm the students, resource source, and access window, then save.
 
-Bulk start, stop, and reboot requests create durable operations. A button click
-means the request was queued, not that Proxmox already reached the requested
-state. Review **Operations** for failures and verified completion.
+The final save creates class, pool, lab, run, enrollments, and assignments together
+in one database transaction. A failure rolls back those changes. Retrying an
+unchanged submission reuses its receipt. VM creation happens separately through
+the existing durable provisioning flow when students select **Start lab**.
 
-Ending a run immediately closes student authorization and queues the documented
-cleanup. Do not manually remove the application record as a substitute for
-verified Proxmox deletion.
+**Save draft** prepares the setup without opening student access. Return to
+**Your lab setups → Edit setup** to change it. Unsaved form changes are held only
+in memory. New account passwords are never kept in browser drafts or receipts;
+share initial account passwords with students separately. Template guest logins
+are different from LabGoblin login accounts. Their optional settings save
+immediately and affect all VMs inheriting that template login.
 
-Instructors see only classes and resources allowed by the selected organization
-and their instructor scope. Platform administration remains unavailable unless
-the account separately has that role.
+Edits reject stale versions and cannot move a run to another class. Removing a
+student, reducing a quota, or replacing the pool is blocked if it would affect
+a linked VM. Existing class enrollments and other labs remain intact. Ended runs
+are read-only. Shared blueprints with several runs use detailed management.
+
+Open **Detailed classroom and infrastructure management** for shared blueprints,
+roster maintenance, bulk start/stop/reboot, assignment revocation, and reviewed
+run cleanup. An operation is complete only after the worker verifies its result.
+Ending a run closes access immediately and queues its documented VM cleanup.
+
+Instructors manage only their own classes in the selected organization; tenant
+administrators and owners can manage all tenant classes. Account creation still
+requires the platform administrator role. Saving a setup does not prove live
+hypervisor capacity or RDP/SSH/VNC connectivity; those are checked by provisioning
+and connection workflows.

@@ -1,128 +1,125 @@
-import { useEffect, useMemo, useState } from 'react'
-import { listCurrentOrganizationMembers } from '../services/organizationApi'
-import { MetricStrip } from '../components/ui/WorkspaceKit'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { AccessContext } from '../components/AccessControl'
+import { LoadingState, ErrorState } from '../components/workflows/WorkflowState'
+import WorkflowStatus from '../components/workflows/WorkflowStatus'
+import TemplateGuestCredentials from '../components/workflows/TemplateGuestCredentials'
 import api from '../services/api'
-import {
-  addEnrollment, bulkAssignRun, changeLabRunState, createClass, createLab, createLabRun,
-  listClasses, listEnrollments, listLabs, listLabRuns, listRunAssignments,
-  previewLabRunClose, removeEnrollment, revokeRunAssignment,
-} from '../services/classroomApi'
+import { emptySetup, setupSteps, setupStepError, setupPayload, setupFromSaved, submissionId } from '../services/labSetup'
+import ClassroomManagementPage from './ClassroomManagementPage'
 
-const detail = error => typeof error?.response?.data?.detail === 'string' ? error.response.data.detail : JSON.stringify(error?.response?.data?.detail || 'Request failed')
-const localDateTimeToIso = value => value ? new Date(value).toISOString() : null
-const steps = [
-  { id: 'classes', label: '1. Classes & roster' },
-  { id: 'labs', label: '2. Lab blueprint' },
-  { id: 'runs', label: '3. Run & assignments' },
-]
+const detail = error => typeof error?.response?.data?.detail === 'string' ? error.response.data.detail : 'Setup could not be saved. Check the fields and try again.'
 
 export default function ClassroomPage({ setMessage }) {
-  const [classes, setClasses] = useState([]); const [labs, setLabs] = useState([]); const [runs, setRuns] = useState([])
-  const [pools, setPools] = useState([]); const [members, setMembers] = useState([])
-  const [selectedClass, setSelectedClass] = useState(''); const [selectedRun, setSelectedRun] = useState('')
-  const [detailError, setDetailError] = useState('')
-  const [detailLoading, setDetailLoading] = useState(false)
-  const [enrollments, setEnrollments] = useState([]); const [assignments, setAssignments] = useState([])
-  const [classForm, setClassForm] = useState({ name: '', term: '' })
-  const [labForm, setLabForm] = useState({ name: '', description: '', default_pool_id: '', student_can_power_off: false, terminal_enabled: false, console_enabled: true, rdp_enabled: false })
-  const [runForm, setRunForm] = useState({ name: '', lab_id: '', starts_at: '', ends_at: '', max_vms_per_student: 1 })
-  const [memberId, setMemberId] = useState(''); const [activeStep, setActiveStep] = useState('classes')
+  const access = useContext(AccessContext)
+  const [catalog, setCatalog] = useState({ classes: [], pools: [], templates: [], members: [], runs: [] })
   const [loading, setLoading] = useState(true); const [loadError, setLoadError] = useState('')
-
-  const reload = async () => {
+  const [editing, setEditing] = useState(false); const [runId, setRunId] = useState(null)
+  const [form, setForm] = useState(emptySetup); const [step, setStep] = useState(0)
+  const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [notice, setNotice] = useState('')
+  const [advanced, setAdvanced] = useState(false); const [studentSearch, setStudentSearch] = useState('')
+  const [machineMode, setMachineMode] = useState('template')
+  const requestId = useRef(submissionId()); const title = useRef(null)
+  const [dirty, setDirty] = useState(false)
+  const load = useCallback(async () => {
     setLoading(true); setLoadError('')
     try {
-      const [classRows, labRows, runRows, poolResponse, memberRows] = await Promise.all([listClasses(), listLabs(), listLabRuns(), api.get('/pools'), listCurrentOrganizationMembers()])
-      setClasses(classRows || []); setLabs(labRows || []); setRuns(runRows || []); setPools(poolResponse.data?.data || []); setMembers(memberRows || [])
-    } catch (error) { setLoadError(detail(error)) } finally { setLoading(false) }
-  }
-  useEffect(() => { reload() }, [])
+      setCatalog((await api.get('/admin/lab-setups/catalog')).data)
+    } catch (err) { setLoadError(detail(err)) } finally { setLoading(false) }
+  }, [])
+  useEffect(() => { load() }, [load])
+  useEffect(() => { if (editing) title.current?.focus() }, [step, editing])
   useEffect(() => {
-    let active = true
-    setDetailError(''); setEnrollments([]); setAssignments([])
-    if (!selectedClass) { setDetailLoading(false); return }
-    setDetailLoading(true)
-    Promise.all([listEnrollments(selectedClass), selectedRun ? listRunAssignments(selectedRun) : Promise.resolve([])])
-      .then(([roster, assigned]) => { if (active) { setEnrollments(roster); setAssignments(assigned) } })
-      .catch(error => { if (active) setDetailError(detail(error)) })
-      .finally(() => { if (active) setDetailLoading(false) })
-    return () => { active = false }
-  }, [selectedClass, selectedRun])
-
-  const classLabs = useMemo(() => labs.filter(lab => String(lab.class_id) === String(selectedClass)), [labs, selectedClass])
-  const selectedRunRow = runs.find(run => String(run.id) === String(selectedRun))
-  const moveTabFocus = (event, currentIndex) => {
-    const keyOffsets = { ArrowLeft: -1, ArrowRight: 1 }
-    let nextIndex = keyOffsets[event.key] === undefined ? currentIndex : (currentIndex + keyOffsets[event.key] + steps.length) % steps.length
-    if (event.key === 'Home') nextIndex = 0
-    if (event.key === 'End') nextIndex = steps.length - 1
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+    const warn = event => { if (dirty) { event.preventDefault(); event.returnValue = '' } }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty])
+  const update = patch => { setForm(old => ({ ...old, ...patch, reviewed: false })); setDirty(true); setError(''); requestId.current = submissionId() }
+  const openNew = () => { setForm(emptySetup()); setRunId(null); setStep(0); setEditing(true); setDirty(false); setError(''); setNotice(''); setMachineMode('template'); requestId.current = submissionId() }
+  const openExisting = async id => {
+    setBusy(true); setError(''); setNotice('')
+    try { const row = (await api.get(`/admin/lab-setups/${id}`)).data; setForm(setupFromSaved(row)); setRunId(id); setStep(0); setMachineMode('pool'); setEditing(true); setDirty(false); requestId.current = submissionId() }
+    catch (err) { setError(detail(err)) } finally { setBusy(false) }
+  }
+  const next = () => { const message = ['ended','cancelled'].includes(form.state) ? '' : setupStepError(form, step); if (message) { setError(message); return } setError(''); setStep(step + 1) }
+  const save = async event => {
     event.preventDefault()
-    setActiveStep(steps[nextIndex].id)
-    document.getElementById(`classroom-tab-${steps[nextIndex].id}`)?.focus()
-  }
-  const save = async (work, message) => { try { await work(); await reload(); setMessage({ type: 'success', text: message }) } catch (error) { setMessage({ type: 'error', text: detail(error) }) } }
-  const endRun = async () => {
+    if (busy) return
+    for (let i=0; i<setupSteps.length; i++) { const message = setupStepError(form, i); if (message) { setError(message); setStep(i); return } }
+    setBusy(true); setError('')
     try {
-      const preview = await previewLabRunClose(selectedRun, 'end')
-      if (!window.confirm(`End this run, expire ${preview.assignments_affected} assignment(s), and queue deletion of ${preview.vm_deletions_to_queue} Proxmox VM(s)?`)) return
-      await changeLabRunState(selectedRun, 'end', preview.confirmation); await reload(); setMessage({ type: 'success', text: 'Lab run ended; verified VM cleanup was queued.' })
-    } catch (error) { setMessage({ type: 'error', text: detail(error) }) }
+      const payload = setupPayload(form, requestId.current)
+      const result = runId ? await api.put(`/admin/lab-setups/${runId}`, payload) : await api.post('/admin/lab-setups', payload)
+      const row = result.data
+      setDirty(false); setForm(emptySetup()); setEditing(false); setRunId(null)
+      setNotice(`${row.name} saved as ${row.state}. ${row.assignment_count} machine assignment(s) prepared. VM provisioning is tracked separately when students start their labs.`)
+      await load()
+    } catch (err) { setError(detail(err)) } finally { setBusy(false) }
   }
+  const cancel = () => { if (dirty && !window.confirm('Discard unsaved setup changes?')) return; setForm(emptySetup()); setDirty(false); setEditing(false); setError('') }
+  if (advanced) return <><div className='ui-cluster'><button type='button' onClick={() => { setAdvanced(false); load() }}>Back to guided setup</button></div><ClassroomManagementPage setMessage={setMessage}/></>
+  if (loading) return <LoadingState label='Loading lab setup…'/>
+  if (loadError) return <ErrorState message={loadError} onRetry={load}/>
+  const students = catalog.members.filter(row => row.role === 'student' && row.is_active !== false)
+  const pool = catalog.pools.find(row => String(row.id) === String(form.pool_id))
+  const template = catalog.templates.find(row => String(row.id) === String(form.template_id)) || catalog.templates.find(row => row.source_vmid === pool?.template_vmid)
+  const classroom = catalog.classes.find(row => String(row.id) === String(form.class_id))
+  const readOnly = !['draft', 'scheduled', 'active'].includes(form.state)
 
-  return <section className='page-shell' aria-labelledby='classroom-title'>
-    <header className='ui-page-header'><div><p className='muted'>Teaching</p><h2 id='classroom-title'>Classroom</h2><p className='ui-page-header__description'>Build the class in order: roster, blueprint, then scheduled run and VM assignments.</p></div><button type='button' onClick={reload} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh data'}</button></header>
-    <MetricStrip items={[{ label: 'Classes', value: loading || loadError ? null : classes.length, icon: 'classroom' }, { label: 'Blueprints', value: loading || loadError ? null : labs.length, icon: 'template' }, { label: 'Lab runs', value: loading || loadError ? null : runs.length, icon: 'event' }]}/>
-    <div className='workspace-note'><img src='/brand/labgoblin-icon.svg' alt=''/><div><h3>Build. Deploy. Learn. Repeat.</h3><p>{activeStep === 'classes' ? 'Start with a class and enroll its learners.' : activeStep === 'labs' ? 'Define a reusable lab and choose the access students receive.' : 'Schedule the lab, assign learners, and follow their progress.'}</p></div></div>
-    {loading ? <p className='muted' role='status'>Loading classroom data…</p> : null}
-    {loadError ? <p className='msg error' role='alert'>{loadError}</p> : null}
-    {detailLoading ? <p role='status'>Loading roster and assignments…</p> : null}
-    {detailError ? <p className='msg error' role='alert'>{detailError}</p> : null}
-    <div className='ui-tabs__list' role='tablist' aria-label='Classroom workflow'>{steps.map((step, index) => <button key={step.id} id={`classroom-tab-${step.id}`} className='ui-tabs__tab' role='tab' aria-selected={activeStep === step.id} aria-controls={`classroom-panel-${step.id}`} tabIndex={activeStep === step.id ? 0 : -1} onKeyDown={event => moveTabFocus(event, index)} onClick={() => setActiveStep(step.id)}>{step.label}</button>)}</div>
-
-    {activeStep === 'classes' ? <section id='classroom-panel-classes' className='panel' role='tabpanel' aria-labelledby='classroom-tab-classes'>
-      <h3>Classes and roster</h3>
-      <div className='ui-form-grid'>
-        <label className='ui-field'>Class name<input className='input' value={classForm.name} onChange={event => setClassForm({...classForm, name: event.target.value})} /></label>
-        <label className='ui-field'>Term<input className='input' value={classForm.term} onChange={event => setClassForm({...classForm, term: event.target.value})} /></label>
-        <div className='ui-cluster ui-form-grid__wide'><button disabled={!classForm.name} onClick={() => save(async () => { await createClass(classForm); setClassForm({name:'', term:''}) }, 'Class created.')}>Create class</button></div>
-      </div>
-      <label className='ui-field'>Working class<select className='input' value={selectedClass} onChange={event => { setSelectedClass(event.target.value); setSelectedRun('') }}><option value=''>Select a class…</option>{classes.map(row => <option key={row.id} value={row.id}>{row.name}{row.term ? ` — ${row.term}` : ''}</option>)}</select></label>
-      {selectedClass ? <>
-        <div className='ui-cluster'><label className='ui-field'>Organization member<select className='input' value={memberId} onChange={event => setMemberId(event.target.value)}><option value=''>Select a member…</option>{members.map(row => <option key={row.user_id} value={row.user_id}>{row.username} ({row.role})</option>)}</select></label><button disabled={!memberId} onClick={() => save(async () => { await addEnrollment(selectedClass, {user_id:Number(memberId), role:'student'}); setEnrollments(await listEnrollments(selectedClass)); setMemberId('') }, 'Student enrolled.')}>Enroll student</button></div>
-        {!detailLoading && !detailError && enrollments.length === 0 ? <p className='muted'>No students are enrolled in this class.</p> : <div className='ui-table-wrap' role='region' aria-label='Class roster' tabIndex='0'><table className='ui-table'><thead><tr><th scope='col'>Student</th><th scope='col'>Role</th><th scope='col'>Active</th><th scope='col'>Action</th></tr></thead><tbody>{enrollments.map(row => { const name = members.find(member => member.user_id === row.user_id)?.username || row.user_id; return <tr key={row.id}><th scope='row'>{name}</th><td>{row.role || 'student'}</td><td>{row.is_active ? 'Yes' : 'No'}</td><td><button className='btn-danger' aria-label={`Remove ${name} from class`} onClick={() => save(async () => { await removeEnrollment(selectedClass, row.user_id); setEnrollments(await listEnrollments(selectedClass)) }, 'Enrollment removed.')}>Remove</button></td></tr> })}</tbody></table></div>}
-      </> : <p className='muted'>Select a class to manage its roster.</p>}
-    </section> : null}
-
-    {activeStep === 'labs' ? <section id='classroom-panel-labs' className='panel' role='tabpanel' aria-labelledby='classroom-tab-labs'>
-      <h3>Lab blueprint</h3><p className='muted'>Choose the class and define the access students receive.</p>
-      <label className='ui-field'>Class<select className='input' value={selectedClass} onChange={event => setSelectedClass(event.target.value)}><option value=''>Select a class…</option>{classes.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
-      <div className='ui-form-grid'>
-        <label className='ui-field'>Lab name<input className='input' value={labForm.name} onChange={event => setLabForm({...labForm, name:event.target.value})} /></label>
-        <label className='ui-field'>Default pool<select className='input' value={labForm.default_pool_id} onChange={event => setLabForm({...labForm, default_pool_id:event.target.value})}><option value=''>Select a pool…</option>{pools.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
-        <fieldset className='ui-cluster ui-form-grid__wide'><legend>Student access</legend><label><input type='checkbox' checked={labForm.student_can_power_off} onChange={event => setLabForm({...labForm, student_can_power_off:event.target.checked})}/> Power off</label><label><input type='checkbox' checked={false} disabled/> Terminal (unavailable)</label><label><input type='checkbox' checked={labForm.console_enabled} onChange={event => setLabForm({...labForm, console_enabled:event.target.checked})}/> Console</label><label><input type='checkbox' checked={labForm.rdp_enabled} onChange={event => setLabForm({...labForm, rdp_enabled:event.target.checked})}/> RDP</label></fieldset>
-        <div className='ui-cluster ui-form-grid__wide'><button disabled={!selectedClass || !labForm.name || !labForm.default_pool_id} onClick={() => save(async () => { await createLab({...labForm, class_id:Number(selectedClass), default_pool_id:Number(labForm.default_pool_id)}); setLabForm({...labForm, name:'', description:''}) }, 'Lab blueprint created.')}>Create blueprint</button></div>
-      </div>
-      {selectedClass ? <p className='muted' role='status'>Blueprints for this class: {classLabs.map(row => row.name).join(', ') || 'none yet'}</p> : null}
-    </section> : null}
-
-    {activeStep === 'runs' ? <section id='classroom-panel-runs' className='panel' role='tabpanel' aria-labelledby='classroom-tab-runs'>
-      <h3>Scheduled run and assignments</h3>
-      <label className='ui-field'>Class<select className='input' value={selectedClass} onChange={event => { setSelectedClass(event.target.value); setSelectedRun('') }}><option value=''>Select a class…</option>{classes.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
-      <div className='ui-form-grid'>
-        <label className='ui-field'>Lab blueprint<select className='input' value={runForm.lab_id} onChange={event => setRunForm({...runForm, lab_id:event.target.value})}><option value=''>Select a lab…</option>{classLabs.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
-        <label className='ui-field'>Run name<input className='input' value={runForm.name} onChange={event => setRunForm({...runForm, name:event.target.value})} /></label>
-        <label className='ui-field'>Starts<input className='input' type='datetime-local' value={runForm.starts_at} onChange={event => setRunForm({...runForm, starts_at:event.target.value})}/></label>
-        <label className='ui-field'>Ends<input className='input' type='datetime-local' value={runForm.ends_at} onChange={event => setRunForm({...runForm, ends_at:event.target.value})}/></label>
-        <label className='ui-field'>VMs per student<input className='input' type='number' min='1' max='10' value={runForm.max_vms_per_student} onChange={event => setRunForm({...runForm, max_vms_per_student:Number(event.target.value)})}/></label>
-        <div className='ui-cluster ui-form-grid__wide'><button disabled={!runForm.lab_id || !runForm.name} onClick={() => save(async () => { await createLabRun({...runForm, lab_id:Number(runForm.lab_id), starts_at:localDateTimeToIso(runForm.starts_at), ends_at:localDateTimeToIso(runForm.ends_at)}); setRunForm({...runForm, name:''}) }, 'Lab run created.')}>Create run</button></div>
-      </div>
-      <label className='ui-field'>Manage run<select className='input' value={selectedRun} onChange={event => setSelectedRun(event.target.value)}><option value=''>Select a run…</option>{runs.filter(run => classLabs.some(lab => lab.id === run.lab_id)).map(row => <option key={row.id} value={row.id}>{row.name} — {row.state}</option>)}</select></label>
-      {selectedRunRow ? <>
-        <div className='ui-cluster' aria-label='Run actions'><button onClick={() => save(async () => { await bulkAssignRun(selectedRun); setAssignments(await listRunAssignments(selectedRun)) }, 'Assignments created for the active roster.')}>Assign roster</button>{['start','stop','reboot'].map(action => <button key={action} onClick={() => save(() => api.post(`/admin/lab-runs/${selectedRun}/vms/${action}`), `${action} queued for assigned VMs.`)}>{action[0].toUpperCase()+action.slice(1)} all</button>)}{['draft','scheduled'].includes(selectedRunRow.state) && <button onClick={() => save(() => changeLabRunState(selectedRun,'activate'), 'Lab run activated.')}>Activate now</button>}{selectedRunRow.state === 'draft' && selectedRunRow.starts_at && <button onClick={() => save(() => changeLabRunState(selectedRun,'schedule'), 'Lab run scheduled; access will open inside its window.')}>Schedule</button>}{selectedRunRow.state === 'active' && <button className='btn-danger' onClick={endRun}>End run</button>}</div>
-        <p className='muted' role='status'>State: {selectedRunRow.state} · Currently open: {selectedRunRow.effective_open ? 'Yes' : 'No'} · Quota: {selectedRunRow.max_vms_per_student} VM(s) per student</p>
-        {!detailLoading && !detailError && assignments.length === 0 ? <p className='muted'>No assignments have been created for this run.</p> : <div className='ui-table-wrap' role='region' aria-label='Run assignments' tabIndex='0'><table className='ui-table'><thead><tr><th scope='col'>Student</th><th scope='col'>Slot</th><th scope='col'>Template</th><th scope='col'>Status</th><th scope='col'>VM</th><th scope='col'>Action</th></tr></thead><tbody>{assignments.map(row => { const name = row.username || row.user_id; return <tr key={row.id}><th scope='row'>{name}</th><td>{row.slot_index}</td><td>{row.template_name || row.template_id}</td><td>{row.status}</td><td>{row.student_vm_id || '-'}</td><td><button className='btn-danger' aria-label={`Revoke assignment for ${name}`} onClick={() => save(async () => { await revokeRunAssignment(selectedRun,row.id); setAssignments(await listRunAssignments(selectedRun)) }, 'Assignment revoked.')}>Revoke</button></td></tr> })}</tbody></table></div>}
-      </> : <p className='muted'>Select a run to manage assignments and VM actions.</p>}
-    </section> : null}
+  return <section className='page-shell lab-studio' aria-labelledby='setup-title'>
+    <header className='workspace-heading'><div><p className='eyebrow'>LabGoblin / Teaching</p><h2 id='setup-title'>Labs, ready for learning</h2><p>One guided setup for the class, machines, student accounts, and access.</p></div>{!editing ? <button type='button' onClick={openNew}>Create a lab</button> : <button type='button' className='ui-button--secondary' onClick={cancel} disabled={busy}>Close setup</button>}</header>
+    {notice ? <p className='ui-alert ui-alert--success' role='status'>{notice}</p> : null}
+    {error ? <p className='msg error' role='alert'>{error}</p> : null}
+    {!editing ? <>
+      <div className='workspace-note'><img src='/brand/labgoblin-icon.svg' alt=''/><div><h3>Build. Deploy. Learn. Repeat.</h3><p>Start with a template. LabGoblin creates the connected classroom records together. Save a draft, return to edit, then open the lab when you’re ready.</p></div></div>
+      <div className='workspace-section-title'><h3>Your lab setups</h3><button className='ui-button--secondary' onClick={load}>Refresh</button></div>
+      {!catalog.runs.length ? <div className='panel workspace-empty'><h3>Your first lab starts here</h3><p>We’ll guide you through five short steps. Existing classes, pools, and accounts can be reused.</p><button onClick={openNew}>Create your first lab</button></div> : <div className='lab-resource-grid'>{catalog.runs.map(row => <article className='panel' key={row.id}><WorkflowStatus value={row.state}/><h3>{row.name}</h3><p>{row.assignment_count} assignment(s) · {row.max_vms_per_student} machine(s) per student</p><button disabled={busy} onClick={() => openExisting(row.id)}>{['ended','cancelled'].includes(row.state) ? 'View setup' : 'Edit setup'}</button></article>)}</div>}
+      <details className='panel'><summary>Detailed classroom and infrastructure management</summary><p>Manage shared blueprints, class rosters, run power actions, and reviewed cleanup.</p><div className='ui-cluster'><button onClick={() => setAdvanced(true)}>Open detailed classroom management</button><Link to='/pools'>Manage pools</Link>{access.platformAdmin ? <Link to='/admin/users'>Manage accounts</Link> : null}</div></details>
+    </> : <div className='lab-wizard-layout'>
+      <nav className='lab-wizard-steps' aria-label='Lab setup steps'><ol>{setupSteps.map((label, index) => <li key={label}><button type='button' aria-current={step === index ? 'step' : undefined} disabled={busy || index > step} onClick={() => { setStep(index); setError('') }}><span aria-hidden='true'>{index + 1}</span>{label}</button></li>)}</ol><p>Changes are saved together after review. Passwords are never saved as a browser draft.</p></nav>
+      <form className='panel lab-wizard-panel' onSubmit={save}>
+        <p className='eyebrow'>{runId ? 'Edit lab' : 'New lab'} · Step {step + 1} of {setupSteps.length}</p><h3 tabIndex='-1' ref={title}>{setupSteps[step]}</h3>
+        {readOnly ? <p role='status'>This lab has ended and is read-only. Create a new setup to run it again.</p> : null}
+        <fieldset disabled={busy || readOnly} className='lab-wizard-fields'>
+          {step === 0 ? <>
+            <label className='ui-field'>Lab name<input value={form.name} maxLength='120' onChange={e => update({name:e.target.value})} placeholder='For example, Linux networking basics'/></label>
+            <label className='ui-field'>Student instructions<textarea value={form.description} maxLength='255' rows='4' onChange={e => update({description:e.target.value})} placeholder='What should students do in this lab?'/></label>
+            <label className='ui-field'>Class<select disabled={Boolean(runId)} value={form.class_id} onChange={e => update({class_id:e.target.value})}><option value=''>Create a new class</option>{catalog.classes.map(row => <option value={row.id} key={row.id}>{row.name}</option>)}</select></label>
+            {!form.class_id ? <div className='ui-form-grid'><label className='ui-field'>New class name<input maxLength='120' value={form.class_name} onChange={e => update({class_name:e.target.value})}/></label><label className='ui-field'>Term (optional)<input maxLength='120' value={form.term} onChange={e => update({term:e.target.value})}/></label></div> : <p>Using {classroom?.name || form.class_name}. Other labs in this class keep their own settings.</p>}
+          </> : null}
+          {step === 1 ? <>
+            <p>Choose the starting machine. A dedicated pool is created automatically when you choose a template.</p>
+            <label className='ui-field'>Machine source<select value={machineMode} onChange={e => { setMachineMode(e.target.value); update({pool_id:'',template_id:''}) }}><option value='template'>Start from a template</option><option value='pool'>Reuse an existing pool</option></select></label>
+            {machineMode === 'template' ? <label className='ui-field'>Template<select value={form.template_id} onChange={e => update({template_id:e.target.value,pool_id:''})}><option value=''>Choose a template…</option>{catalog.templates.filter(row => row.enabled).map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label> : <label className='ui-field'>Existing pool<select value={form.pool_id} onChange={e => update({pool_id:e.target.value,template_id:''})}><option value=''>Choose a pool…</option>{catalog.pools.filter(row => row.enabled && !row.maintenance_mode).map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>}
+            {template ? <div className='workspace-note'><img src='/brand/labgoblin-icon.svg' alt=''/><div><h4>{template.name}</h4><p>Each assignment uses a separate clone of this template.</p></div></div> : <p>Ask an administrator to import a template if none is available.</p>}
+            {pool?.placement_warning ? <p role='status'>{pool.placement_warning}</p> : null}
+            <p>Guest logins are managed in template settings. The connection page checks which browser methods are available.</p>
+          </> : null}
+          {step === 2 ? <>
+            <p>Select students for this lab. LabGoblin enrolls them in the class and creates their assignments when you save.</p>
+            <label className='ui-field'>Find a student<input type='search' value={studentSearch} onChange={e => setStudentSearch(e.target.value)}/></label>
+            <div className='lab-roster-list' role='group' aria-label='Student roster'>{students.filter(row => row.username.toLowerCase().includes(studentSearch.toLowerCase())).map(row => <label key={row.user_id}><input type='checkbox' checked={form.student_ids.includes(row.user_id)} onChange={e => update({student_ids:e.target.checked ? [...form.student_ids,row.user_id] : form.student_ids.filter(id => id !== row.user_id)})}/><span>{row.username}</span></label>)}</div>
+            {!students.length ? <p>No active student members are available.</p> : null}<p role='status'>{form.student_ids.length + form.new_students.length} student(s) selected</p>
+            {access.platformAdmin ? <details><summary>Create student login accounts here</summary><p>New accounts are added to this organization and class. Students must change their initial password at first sign-in. Share initial passwords with them separately.</p>{form.new_students.map((row,index) => <div className='panel ui-stack' key={index}><h4>New student {index + 1}</h4>{[['username','Username','text'],['email','Email','email'],['password','Initial password','password']].map(([field,label,type]) => <label className='ui-field' key={field}>{label}<input type={type} autoComplete={field === 'password' ? 'new-password' : 'off'} value={row[field]} onChange={e => update({new_students:form.new_students.map((item,i) => i === index ? {...item,[field]:e.target.value} : item)})}/></label>)}<button type='button' className='ui-button--secondary' onClick={() => update({new_students:form.new_students.filter((_,i) => i !== index)})}>Remove new student {index + 1}</button></div>)}<button type='button' disabled={form.new_students.length >= 100} onClick={() => update({new_students:[...form.new_students,{username:'',email:'',password:'',display_name:''}]})}>Add new student account</button></details> : <p>An administrator can create login accounts; instructors can enroll existing student members here.</p>}
+          </> : null}
+          {step === 3 ? <>
+            <label className='ui-field'>Machines per student<input type='number' min='1' max='10' value={form.slots} onChange={e => update({slots:e.target.value})}/></label>
+            <fieldset><legend>Browser connection methods</legend><p>Methods appear only after the VM passes its connection checks.</p>{[['console_enabled','VNC desktop'],['rdp_enabled','Windows remote desktop (RDP)'],['terminal_enabled','Linux terminal (SSH)']].map(([key,label]) => <label className='lab-check' key={key}><input type='checkbox' checked={form[key]} onChange={e => update({[key]:e.target.checked})}/>{label}</label>)}</fieldset>
+            <details><summary>Student power controls</summary>{[['student_can_power_off','Allow power off'],['student_can_reset','Allow restart / reset']].map(([key,label]) => <label className='lab-check' key={key}><input type='checkbox' checked={form[key]} onChange={e => update({[key]:e.target.checked})}/>{label}</label>)}</details>
+            <label className='ui-field'>When should students have access?<select value={form.state} onChange={e => update({state:e.target.value})}>{readOnly ? <option value={form.state}>{form.state}</option> : null}<option value='draft'>Save as draft — open later</option><option value='scheduled'>Open on a schedule</option><option value='active'>Open now</option></select></label>
+            <div className='ui-form-grid'><label className='ui-field'>Starts (local time, optional for draft/open now)<input type='datetime-local' value={form.starts_at} onChange={e => update({starts_at:e.target.value})}/></label><label className='ui-field'>Ends (local time, optional)<input type='datetime-local' value={form.ends_at} onChange={e => update({ends_at:e.target.value})}/></label></div><p>After the end time, student access closes. VM cleanup remains a separate reviewed action.</p>
+          </> : null}
+          {step === 4 ? <>
+            <p>Review the connected setup. Saving creates classroom records and assignments; it does not report VM creation as complete.</p>
+            <dl className='lab-review'><dt>Lab</dt><dd>{form.name}</dd><dt>Class</dt><dd>{classroom?.name || form.class_name}</dd><dt>Machines</dt><dd>{pool?.name || template?.name || 'Unavailable'} · {form.slots} per student</dd><dt>Students</dt><dd>{form.student_ids.length} existing + {form.new_students.length} new accounts</dd><dt>Access</dt><dd>{[['console_enabled','VNC'],['rdp_enabled','RDP'],['terminal_enabled','Terminal']].filter(([key]) => form[key]).map(([,label]) => label).join(', ') || 'No browser methods enabled'}</dd><dt>Availability</dt><dd>{form.state} · {form.starts_at || 'No start restriction'} → {form.ends_at || 'No end restriction'}</dd></dl>
+            <details><summary>Review student names</summary><ul>{form.student_ids.map(id => <li key={id}>{students.find(row => row.user_id === id)?.username || `Student ${id}`}</li>)}{form.new_students.map((row,i) => <li key={`new-${i}`}>{row.username} (new account)</li>)}</ul></details>
+            {runId ? <p>Saving replaces this run’s assignment selection. Removing a student or changing the pool is blocked while an affected assignment has a linked VM. Class enrollment and other labs are retained.</p> : null}
+            <label className='lab-check'><input type='checkbox' checked={form.reviewed} onChange={e => setForm({...form,reviewed:e.target.checked})}/> I reviewed the students, machine source, access, and schedule.</label>
+          </> : null}
+        </fieldset>
+        <footer className='lab-wizard-footer'><button type='button' className='ui-button--secondary' disabled={step === 0 || busy} onClick={() => {setStep(step-1);setError('')}}>Back</button><span>{dirty ? 'Unsaved changes' : runId ? 'Saved setup' : 'Nothing saved yet'}</span>{step < 4 ? <button type='button' disabled={busy} onClick={next}>Continue</button> : <button type='submit' disabled={busy || readOnly || !form.reviewed}>{busy ? 'Saving setup…' : form.state === 'draft' ? 'Save draft' : runId ? 'Save changes' : form.state === 'scheduled' ? 'Save and schedule lab' : 'Save and open lab'}</button>}</footer>
+      </form>
+        {step === 1 && template && access.tenantAdmin ? <details className='lab-template-login'><summary>Optional: edit this template’s shared guest login</summary><p>These settings save immediately and affect all VMs inheriting this template login.</p><TemplateGuestCredentials key={template.id} templateId={template.id}/></details> : null}
+    </div>}
   </section>
 }
