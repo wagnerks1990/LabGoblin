@@ -25,6 +25,7 @@
 - Keep Proxmox terminology only when it genuinely names the Proxmox VE integration, API objects, VMIDs/UPIDs, configuration variables, or integration-specific database models.
 - Keep README, MkDocs/wiki pages, deployment/runbooks, architecture notes, release notes, screenshots/help text, and `AI_CONTEXT.md` synchronized with relevant behavior changes.
 - Brand guidance and design tokens are defined in `docs/brand.md`.
+- The project owner's approved visual direction is documented in `docs/design/rendering-reference.md`. Frontend work should use it as a visual target after security, accessibility, documented workflow/API contracts, and canonical brand rules. Do not blindly copy generated artwork or fabricated data.
 
 ## Workflow
 - Never work directly on `main`.
