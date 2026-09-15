@@ -1,5 +1,5 @@
 pytest
 pytest-asyncio
-bandit==1.8.6
-pip-audit==2.9.0
-ruff==0.12.12
+bandit==1.9.4
+pip-audit==2.10.1
+ruff==0.16.7
