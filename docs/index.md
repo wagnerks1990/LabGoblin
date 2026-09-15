@@ -5,7 +5,7 @@
 
 This documentation is the source of truth for LabGoblin. It is stored with the code so that architectural, operational, security, branding, and user-facing changes can be reviewed and released together.
 
-See [Brand and naming](brand.md) for canonical product identity, colors, terminology, legacy-name migration rules, and requirements for AI/coding agents.
+See [Brand and naming](brand.md) for canonical product identity, colors, terminology, legacy-name migration rules, and requirements for AI/coding agents. See [Visual rendering reference](design/rendering-reference.md) for the project owner's approved visual direction for future frontend work; it is a design target rather than evidence that every depicted feature exists.
 
 ## Current status
 
