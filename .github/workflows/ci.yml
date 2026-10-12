@@ -148,6 +148,17 @@ jobs:
       - run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml config --quiet
       - run: sudo mkdir -p /run/labgoblin-updater
       - run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml up -d --build
+      - name: Verify patched frontend runtime libraries
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.live-test.yml exec -T web sh -eu -c '
+            for requirement in libexpat:2.8.5-r0 libpng:1.6.59-r0 nghttp2-libs:1.70.0-r0 pcre2:10.49-r0 tiff:4.7.2-r0 zlib:1.3.2-r1; do
+              package=${requirement%%:*}
+              minimum=${requirement#*:}
+              installed=$(apk list --from installed --manifest "$package" | sed "s/^$package //")
+              test -n "$installed"
+              test "$(apk version --no-network -t "$installed" "$minimum")" != "<"
+            done
+          '
       - name: Verify bundled Guacamole protocol support
         run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml exec -T api python < backend/scripts/check_guacd.py
       - name: Wait for readiness
