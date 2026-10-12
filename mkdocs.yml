@@ -40,6 +40,7 @@ nav:
       - Post-reset validation: post-reset-validation.md
       - Codex workflow: codex-cloud-workflow.md
       - GUI validation: gui-section-validation.md
+  - Hosted Wiki: maintenance/wiki-home.md
   - V2 Roadmap: roadmap/v2-rebuild.md
   - Existing documentation:
       - Legacy deployment redirect: deployment.md
