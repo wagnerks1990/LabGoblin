@@ -274,3 +274,9 @@ This does not resolve Debian advisories for which the configured distribution
 has no published fix. Do not suppress those findings or describe the whole
 runtime as vulnerability-free. Rebuild the image to receive the patched library;
 this source change does not authorize deployment or production restarts.
+
+The security-index refresh uses `--error-on=any` to fail on partial APT fetch
+failures, and the image build asserts the installed Debian version is at least
+5.8.1-1+deb13u2. The existing isolated container CI additionally verifies the
+actual runtime's patched library, non-root UID and absence of pip/ensurepip.
+A failed mirror/index update cannot silently qualify the vulnerable base.

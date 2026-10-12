@@ -6,8 +6,9 @@ WORKDIR /app
 
 # The pinned base predates the Debian liblzma security update. Upgrade only the
 # affected runtime library without adding packages or weakening apt signatures.
-RUN apt-get update \
+RUN apt-get update --error-on=any \
     && apt-get install --yes --no-install-recommends --only-upgrade liblzma5 \
+    && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' liblzma5)" ge 5.8.1-1+deb13u2 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN addgroup --system app && adduser --system --ingroup app app
