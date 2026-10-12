@@ -4,6 +4,20 @@ FROM python:3.12.15-slim-trixie@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/app
 WORKDIR /app
 
+# Refresh the fixable Debian xz runtime advisories in the pinned base. Keep
+# apt metadata out of the final image and verify TLS when a proxy CA is used.
+RUN --mount=type=secret,id=proxy_ca \
+    set -eu; \
+    if [ -f /run/secrets/proxy_ca ]; then \
+        apt-get -o Acquire::https::CaInfo=/run/secrets/proxy_ca update; \
+        apt-get -o Acquire::https::CaInfo=/run/secrets/proxy_ca install --yes --no-install-recommends --only-upgrade liblzma5; \
+    else \
+        apt-get update; \
+        apt-get install --yes --no-install-recommends --only-upgrade liblzma5; \
+    fi; \
+    dpkg --compare-versions "$(dpkg-query -W -f='${Version}' liblzma5)" ge '5.8.1-1+deb13u2'; \
+    rm -rf /var/lib/apt/lists/*
+
 RUN addgroup --system app && adduser --system --ingroup app app
 COPY requirements.txt /tmp/requirements.txt
 # The optional CA bundle supports TLS-verifying builds behind an HTTPS proxy.
