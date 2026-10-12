@@ -1,0 +1,53 @@
+name: Wiki Sync
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'scripts/sync_wiki.py'
+      - '.github/workflows/wiki-sync.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: labgoblin-wiki
+  cancel-in-progress: false
+
+jobs:
+  wiki-sync:
+    if: github.ref == 'refs/heads/main' && github.ref_protected && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Verify deterministic documentation renderer
+        run: python -m unittest discover -s tests -p 'test_sync_wiki.py'
+      - name: Publish tracked documentation
+        env:
+          WIKI_TOKEN: ${{ secrets.WIKI_TOKEN }}
+        run: |
+          set -eu
+          test -n "$WIKI_TOKEN" || { echo 'WIKI_TOKEN must be configured'; exit 1; }
+          wiki_temp=$(mktemp -d)
+          trap 'rm -rf "$wiki_temp"' EXIT
+          cat > "$wiki_temp/askpass" <<'SH'
+          #!/bin/sh
+          case "$1" in
+            *Username*) printf '%s\n' 'x-access-token' ;;
+            *Password*) printf '%s\n' "$WIKI_TOKEN" ;;
+            *) exit 1 ;;
+          esac
+          SH
+          chmod 700 "$wiki_temp/askpass"
+          export GIT_ASKPASS="$wiki_temp/askpass" GIT_TERMINAL_PROMPT=0
+          git -c credential.helper= clone "https://github.com/${GITHUB_REPOSITORY}.wiki.git" "$wiki_temp/wiki"
+          python scripts/sync_wiki.py --source "$GITHUB_WORKSPACE" --destination "$wiki_temp/wiki"
+          git -C "$wiki_temp/wiki" add -- '*.md'
+          if git -C "$wiki_temp/wiki" diff --cached --quiet; then exit 0; fi
+          git -C "$wiki_temp/wiki" -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m "Sync approved docs from ${GITHUB_SHA}"
+          git -C "$wiki_temp/wiki" -c credential.helper= push origin HEAD

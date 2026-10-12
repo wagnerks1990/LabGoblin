@@ -30,3 +30,30 @@ production support; the pre-production acceptance gates remain authoritative.
 - Real-cluster, browser-console, TLS, update-recovery, and restore tests belong
   to the isolated acceptance environment and must be recorded in the
   pre-production acceptance checklist.
+
+## Hosted Wiki synchronization
+
+The versioned `docs/` directory is the source for the GitHub Wiki. The `Wiki
+Sync` workflow publishes only git-tracked Markdown on approved `main` changes
+or a manual dispatch; it uses the repository's `WIKI_TOKEN` secret through a
+short-lived Git askpass helper. The token is never placed in the Git URL,
+committed, or written to the Wiki. Initialize the Wiki once through GitHub's
+**Wiki → Create the first page → Save Page** if cloning it reports not found.
+
+`docs/index.md` becomes `Home`; other pages use `Docs-` followed by their path
+with directory separators converted to hyphens. Relative document links and
+reference links are converted to Wiki names; links to repository assets remain
+repository links. Existing pages outside those generated names are preserved.
+A name collision or repository-escaping link stops publication. Removed source
+pages are retained in the Wiki until reviewed for safe cleanup.
+
+Run the renderer tests and preview without publishing:
+
+```sh
+python -m unittest discover -s tests -p 'test_sync_wiki.py'
+python scripts/sync_wiki.py --destination /tmp/labgoblin-wiki-preview
+```
+
+After the first approved workflow run, verify its logs and open the Wiki Home
+and a nested operations link. A successful local preview does not establish
+that `WIKI_TOKEN` is authorized to push.
