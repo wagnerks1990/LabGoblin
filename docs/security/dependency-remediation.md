@@ -257,3 +257,26 @@ docker run --rm --network none --entrypoint python labgoblin-runtime:fixed -c \
 - This is local cloud validation. Ubuntu host deployment, live infrastructure,
   real Guacamole connections and other CPU architectures are not validated.
   No merge, auto-merge, deployment or production infrastructure change occurs.
+
+## Debian liblzma runtime follow-up — 2026-10-12
+
+The pinned Python base still installs `liblzma5` 5.8.1-1+deb13u1.
+A fresh Debian security index reports 5.8.1-1+deb13u2 as the candidate; the
+simulated targeted upgrade changes only that package. The previous image scan
+identified `DSA-6549-1` and `TEMP-1147318-639065` as fixable in this version.
+The backend Dockerfile now updates the signed Debian indexes and uses
+`apt-get install --only-upgrade --no-install-recommends liblzma5`, then removes
+those indexes. It keeps the reviewed digest, verified pip installer/removal,
+non-root application user and migration entrypoint intact. No extra packages
+are installed, and TLS or Debian repository signature checks are not disabled.
+
+This does not resolve Debian advisories for which the configured distribution
+has no published fix. Do not suppress those findings or describe the whole
+runtime as vulnerability-free. Rebuild the image to receive the patched library;
+this source change does not authorize deployment or production restarts.
+
+The security-index refresh uses `--error-on=any` to fail on partial APT fetch
+failures, and the image build asserts the installed Debian version is at least
+5.8.1-1+deb13u2. The existing isolated container CI additionally verifies the
+actual runtime's patched library, non-root UID and absence of pip/ensurepip.
+A failed mirror/index update cannot silently qualify the vulnerable base.

@@ -148,6 +148,18 @@ jobs:
       - run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml config --quiet
       - run: sudo mkdir -p /run/labgoblin-updater
       - run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml up -d --build
+      - name: Verify runtime security invariants
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.live-test.yml exec -T api python <<'PY'
+          import importlib.util
+          import os
+          import subprocess
+          assert os.getuid() != 0
+          assert importlib.util.find_spec("pip") is None
+          assert importlib.util.find_spec("ensurepip") is None
+          version = subprocess.check_output(["dpkg-query", "-W", "-f=${Version}", "liblzma5"], text=True)
+          subprocess.check_call(["dpkg", "--compare-versions", version, "ge", "5.8.1-1+deb13u2"])
+          PY
       - name: Verify bundled Guacamole protocol support
         run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml exec -T api python < backend/scripts/check_guacd.py
       - name: Wait for readiness
