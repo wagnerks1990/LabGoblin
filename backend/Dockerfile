@@ -4,6 +4,11 @@ FROM python:3.12.15-slim-trixie@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/app
 WORKDIR /app
 
+# Refresh Debian security fixes independently of the pinned Python image.
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN addgroup --system app && adduser --system --ingroup app app
 COPY requirements.txt /tmp/requirements.txt
 # The optional CA bundle supports TLS-verifying builds behind an HTTPS proxy.
