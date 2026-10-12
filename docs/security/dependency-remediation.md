@@ -307,3 +307,8 @@ contexts must first be repaired by an authorized administrator.
 Secret matches and surrounding source text are removed before artifact upload;
 only rule/severity/locations remain. Raw scanner output stays in runner temp,
 outside the artifact path, so a failed parser cannot upload unredacted matches.
+The database download container has no source/archive/daemon mounts. Image
+scanning consumes a host-exported read-only archive with network disabled,
+read-only root/database mounts, dropped capabilities, no-new-privileges and
+bounded temporary cache mounts. It never receives the Docker daemon socket.
+Scanner-job checkout credentials are not persisted.
