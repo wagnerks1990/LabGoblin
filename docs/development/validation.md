@@ -47,3 +47,11 @@ These checks do not validate a live Proxmox cluster, host networking, systemd
 permissions, browser compatibility, TLS termination, update failure recovery,
 or real backup restoration. Record those results with the
 [pre-production acceptance checklist](../operations/preproduction-acceptance.md).
+
+`ruff.toml` explicitly preserves the existing E4/E7/E9/F CI rule set across
+formatter/linter upgrades. Password dependency upgrades must run the real
+bcrypt hash/verify regression as well as the disposable bootstrap flow:
+Passlib 1.7.4's backend initialization is incompatible with bcrypt 5's rejection
+of long internal probe passwords, even when the user's password is short.
+The compatible bcrypt 4.0.1 pin must remain until the hashing backend is replaced
+with a migration plan for existing hashes.

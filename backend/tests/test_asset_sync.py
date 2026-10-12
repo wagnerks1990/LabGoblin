@@ -126,8 +126,9 @@ async def test_process_job_ok_transitions_verified(monkeypatch):
     monkeypatch.setattr(
         AssetSyncService,
         "__init__",
-        lambda self, _db: setattr(self, "db", _db)
-        or setattr(self, "assets", svc.assets),
+        lambda self, _db: (
+            setattr(self, "db", _db) or setattr(self, "assets", svc.assets)
+        ),
     )
     monkeypatch.setattr(svc.assets, "discover_isos_by_node", _discover)
     monkeypatch.setattr(svc.assets, "download_url", _download)
