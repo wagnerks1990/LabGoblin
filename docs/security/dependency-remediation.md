@@ -275,3 +275,15 @@ The optional BuildKit `proxy_ca` secret supports TLS-verifying npm installation
 behind an HTTPS proxy without embedding a private CA in the output image.
 These are build definitions; no deployment or production image promotion is
 performed by repository CI.
+
+The maintained nginx base still had six fixable Alpine package findings in a
+fresh scan (three high, three medium): CVE-2026-93990 (libexpat),
+CVE-2026-46675 (libpng), CVE-2026-58055 (nghttp2-libs),
+CVE-2026-103111 (pcre2), CVE-2026-4775 (tiff), CVE-2026-85091 (zlib).
+Refresh Alpine packages during the frontend runtime build. The same optional
+CA secret preserves TLS verification without storing a private CA in the image.
+
+The Node 24 builder also inherits vulnerable npm tooling; pin npm 12.2.0
+(compatible with Node 24.15+) and verify its registry tarball SHA-512 before
+installation. The tooling stage is separate from application installation so
+it can be scanned independently. Builder tooling is never copied into runtime.
