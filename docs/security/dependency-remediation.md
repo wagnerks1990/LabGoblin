@@ -2,7 +2,7 @@
 
 ## Scope and audit counting
 
-Audits were reproduced from main commit `4eba9580ee2ead572c85ac04737efbb5d960e640` in the isolated cloud development environment. Installed Python packages had 20 distinct advisories: 14 in PyJWT 2.13.0 and six in pip 25.0.1. Resolving the runtime and development manifests produced the same 14 PyJWT advisories; pip is an environment installer rather than a runtime dependency. The frontend lockfile had nine affected package entries (seven high, two moderate), representing seven distinct root advisories (five high, two moderate). Parent entries are dependency propagation, not additional vulnerabilities.
+Audits were reproduced from main commit `4eba9580ee2ead572c85ac04737efbb5d960e640` in the isolated cloud development environment. Installed Python packages had 20 distinct advisories: 14 in PyJWT 2.13.0 and six in pip 25.0.1. Resolving the runtime and development manifests produced the same 14 PyJWT advisories; pip is an environment installer rather than a runtime dependency. The frontend lockfile had nine affected package entries (seven high, two moderate), representing six distinct root advisories (four high, two moderate). Parent entries are dependency propagation, not additional vulnerabilities.
 
 Each pip-audit record is counted once using its GHSA identifier; CVE and PYSEC aliases below identify that same record. References to earlier vulnerabilities in advisory descriptions are not aliases. npm records are deduplicated by GHSA URL; propagated string entries are not counted as new advisories. Severity comes from the GitHub advisory, not the number of aliases or the number of affected parents.
 
@@ -72,7 +72,7 @@ The project uses ordinary CSS. Repository search found no Tailwind configuration
 - Guarded complete Python suite: **320 passed, 68 warnings** (all 312 pre-existing tests plus eight new JWT regressions).
 - Frontend: **40 passed**, zero failed, cancelled or skipped; build passed, 157 modules.
 - Environment guard suite: **11 passed, 71 subtests passed**.
-- Installed Python audit: **20 → 0** distinct advisories. Runtime/development manifest audit: **14 → 0**. Frontend audit: **9 affected packages / 7 root advisories → 0**.
+- Installed Python audit: **20 → 0** distinct advisories. Runtime/development manifest audit: **14 → 0**. Frontend audit: **9 affected packages / 6 root advisories → 0**.
 - Exact audit commands: `python -m pip_audit --format json --aliases --desc`; the same command with `-r backend/requirements.txt -r backend/requirements-dev.txt`; `npm audit --json` in frontend. No ignored advisories or relaxed thresholds.
 - Complete `scripts/codex_cloud_check.sh` gate passed with test-only Compose interpolation values: branding, repository hygiene, shell/Compose syntax, Python compile, Ruff format/lint, Bandit, dependency audits, migration structure, Python/frontend tests, build, generated OpenAPI/type drift and strict MkDocs build. Separate guarded PostgreSQL validation confirmed head `20260914_0019` and no new upgrade operations.
 - Final diff review found only dependency declarations/lockfile, JWT regression tests and this report/navigation entry. No secrets or private environment artifacts are included. There are no runtime, API, model, migration, workflow or visual changes.
