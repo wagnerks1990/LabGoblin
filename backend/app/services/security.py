@@ -6,7 +6,9 @@ import jwt
 from passlib.context import CryptContext
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# SHA-256 preprocessing preserves the complete password beyond bcrypt's
+# 72-byte limit. Legacy bcrypt hashes remain verifiable during recovery.
+pwd_context = CryptContext(schemes=["bcrypt_sha256", "bcrypt"], deprecated="auto")
 
 
 def verify_password(plain: str, hashed: str) -> bool:

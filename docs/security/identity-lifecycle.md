@@ -94,3 +94,19 @@ Authentication lifecycle tests cover login, logout, forced changes, token
 replacement, persistent throttling, structured audit records, and
 administrator password resets.
 
+
+### Complete password hashing
+
+New and changed passwords use Passlib's `bcrypt_sha256` scheme so the complete
+UTF-8 password contributes to the hash, including bytes after bcrypt's 72-byte
+input limit. Existing raw bcrypt hashes remain verifiable; they are replaced
+with the new scheme when the user changes or resets the password. Existing
+legacy hashes cannot recover bytes that bcrypt previously discarded, so users
+who originally chose a password longer than 72 UTF-8 bytes should reset it to
+establish its complete identity. Password changes and recovery continue to
+revoke sessions according to the rules above; no token/session bypass is added.
+
+A rollback must retain the `bcrypt_sha256` verification scheme once any new
+hashes have been stored. Reverting the verifier to bcrypt-only would deny those
+users authentication. Recovery does not require schema changes or rewriting
+stored hashes; never convert hashes by truncating or extracting their fields.
