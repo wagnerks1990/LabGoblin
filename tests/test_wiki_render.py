@@ -50,3 +50,41 @@ def test_freshness_guard_rejects_a_superseded_validated_commit(tmp_path):
     assert subprocess.run([str(guard), validated, str(remote)]).returncode == 0
     git("commit", "--allow-empty", "-m", "Newer revision")
     assert subprocess.run([str(guard), validated, str(remote)]).returncode != 0
+
+
+def test_removed_generated_pages_are_deleted_but_manual_pages_survive(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "index.md").write_text("Home")
+    old = docs / "old.md"
+    old.write_text("Obsolete generated page")
+    output = tmp_path / "wiki"
+    module.render(docs, output)
+    (output / "Manual.md").write_text("Keep unique contributor work")
+    old.unlink()
+    module.render(docs, output)
+    assert not (output / "old.md").exists()
+    assert (output / "Manual.md").read_text() == "Keep unique contributor work"
+
+
+def test_invalid_manifest_cannot_delete_files_outside_wiki(tmp_path):
+    import pytest
+
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    output = tmp_path / "wiki"
+    output.mkdir()
+    outside = tmp_path / "outside.md"
+    outside.write_text("Preserve")
+    (output / ".labgoblin-generated-pages.json").write_text('["../outside.md"]')
+    with pytest.raises(ValueError):
+        module.render(docs, output)
+    assert outside.read_text() == "Preserve"
+
+
+def test_freshness_transport_failure_is_not_a_stale_revision(tmp_path):
+    import subprocess
+
+    guard = Path(__file__).parents[1] / "scripts" / "wiki_is_current.sh"
+    result = subprocess.run([str(guard), "unknown", str(tmp_path / "missing")])
+    assert result.returncode == 2

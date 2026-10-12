@@ -44,3 +44,11 @@ pages in `docs/` because synchronization replaces their matching Wiki pages.
 The MkDocs site remains the full-fidelity destination for images and rendered
 navigation. The workflow publishes documentation only and does not deploy the
 application or connect to classroom infrastructure.
+
+Publication runs on a fresh runner after a separate no-secret documentation
+validation job. The publishing job installs no dependencies and starts its
+standard-library-only renderer with Python `-I -S`, preventing site hooks or
+user Python configuration from running with the Wiki credential. Freshness
+lookups authenticate with the job's read-only token and fail on authentication
+or transport errors. A generated-page manifest removes only previously generated
+pages after document renames/removals; unrelated contributor Wiki pages remain.
