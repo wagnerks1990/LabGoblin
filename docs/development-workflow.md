@@ -30,3 +30,16 @@ production support; the pre-production acceptance gates remain authoritative.
 - Real-cluster, browser-console, TLS, update-recovery, and restore tests belong
   to the isolated acceptance environment and must be recorded in the
   pre-production acceptance checklist.
+
+## Hosted Wiki publication
+
+The `Publish documentation Wiki` workflow validates and copies the public,
+tracked `docs/` Markdown pages to the initialized GitHub Wiki after successful
+main CI, or on an explicit manual dispatch. `WIKI_TOKEN` must have access to the
+repository Wiki. `docs/index.md` becomes `Home`; nested pages use `--` between
+path components, and local Markdown links are rewritten to those page names.
+Existing pages are retained to preserve unique Wiki edits; edit canonical
+pages in `docs/` because synchronization replaces their matching Wiki pages.
+The MkDocs site remains the full-fidelity destination for images and rendered
+navigation. The workflow publishes documentation only and does not deploy the
+application or connect to classroom infrastructure.

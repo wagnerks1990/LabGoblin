@@ -1,0 +1,55 @@
+name: Publish documentation Wiki
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wiki-publication
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Validate public documentation
+        run: |
+          python scripts/check_branding.py
+          python scripts/check_repository_hygiene.py
+          pip install mkdocs==1.6.1
+          mkdocs build --strict
+      - name: Synchronize tracked documentation
+        env:
+          WIKI_TOKEN: ${{ secrets.WIKI_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -eu
+          test -n "$WIKI_TOKEN" || { echo 'WIKI_TOKEN is required'; exit 1; }
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$WIKI_TOKEN" | base64 -w0)"
+          wiki_dir="$RUNNER_TEMP/labgoblin-wiki"
+          git clone "https://github.com/$REPOSITORY.wiki.git" "$wiki_dir"
+          python scripts/render_wiki.py "$wiki_dir"
+          git -C "$wiki_dir" config user.name github-actions[bot]
+          git -C "$wiki_dir" config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git -C "$wiki_dir" add '*.md'
+          if ! git -C "$wiki_dir" diff --cached --quiet; then
+            git -C "$wiki_dir" commit -m "Publish LabGoblin documentation from $(git rev-parse HEAD)"
+            git -C "$wiki_dir" push origin HEAD
+          fi
