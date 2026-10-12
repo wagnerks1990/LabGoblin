@@ -293,3 +293,14 @@ findings; the approved proxy explicitly denies Alpine mirror access (HTTP403
 for dl-cdn.alpinelinux.org), so the final installation must be qualified by
 hosted CI. Do not call the newer base or that pre-upgrade local image
 vulnerability-free.
+
+The new `frontend-container-security` CI job builds the actual final web image,
+runs the digest-pinned Trivy scanner for vulnerabilities and secrets, prints
+all advisory counts/identifiers, and retains its complete JSON as a 14-day
+artifact. Qualification rejects every advisory with a recorded available fix
+at every severity and every secret finding. Unfixed records remain visible;
+there are no ignored-advisory lists or scanner exclusions. This supplements
+npm auditing and the existing container application tests. The upload action
+is pinned to verified upload-artifact v4.6.2 commit. Add this proven check to
+main protections after its hosted validation succeeds; existing wrong required
+contexts must first be repaired by an authorized administrator.

@@ -117,6 +117,47 @@ jobs:
       - run: pip install mkdocs==1.6.1
       - run: mkdocs build --strict
 
+  frontend-container-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: docker build -t labgoblin-web:audit frontend
+      - name: Scan actual frontend runtime image
+        run: |
+          mkdir -p container-audit
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$PWD/container-audit:/reports" \
+            aquasec/trivy@sha256:e2b22eac59c02003d8749f5b8d9bd073b62e30fefaef5b7c8371204e0a4b0c08 \
+            image --db-repository registry-1.docker.io/aquasec/trivy-db:2 \
+            --scanners vuln,secret --format json --output /reports/frontend.json labgoblin-web:audit
+      - name: Reject fixable advisories and secrets without hiding remaining findings
+        run: |
+          python - <<'PY'
+          import collections
+          import json
+
+          report = json.load(open("container-audit/frontend.json"))
+          vulnerabilities = [v for result in report.get("Results", []) for v in result.get("Vulnerabilities", [])]
+          secrets = [s for result in report.get("Results", []) for s in result.get("Secrets", [])]
+          fixable = [v for v in vulnerabilities if v.get("FixedVersion")]
+          print("All advisory records:", len(vulnerabilities), dict(collections.Counter(v["Severity"] for v in vulnerabilities)))
+          print("Fixable advisory records:", len(fixable), "Secret findings:", len(secrets))
+          for vulnerability in vulnerabilities:
+              print(vulnerability["PkgName"], vulnerability["VulnerabilityID"], vulnerability["Severity"], vulnerability.get("FixedVersion", "no recorded fix"))
+          if fixable or secrets:
+              raise SystemExit("Container security qualification failed; review retained JSON report")
+          PY
+      - name: Preserve complete runtime security evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: frontend-container-security-${{ github.sha }}
+          path: container-audit/frontend.json
+          if-no-files-found: error
+          retention-days: 14
+
   repository-hygiene:
     runs-on: ubuntu-latest
     timeout-minutes: 5
