@@ -257,3 +257,28 @@ docker run --rm --network none --entrypoint python labgoblin-runtime:fixed -c \
 - This is local cloud validation. Ubuntu host deployment, live infrastructure,
   real Guacamole connections and other CPU architectures are not validated.
   No merge, auto-merge, deployment or production infrastructure change occurs.
+
+## Debian runtime-library follow-up — 2026-10-12
+
+The pinned base still installs `liblzma5` `5.8.1-1+deb13u1`. The previous
+actual-image scan lists two fixable records for that package, `DSA-6549-1` and
+`TEMP-1147318-639065`, with `5.8.1-1+deb13u2` as the fixed version. The Dockerfile
+now refreshes signed Debian indexes, upgrades only the already-installed
+`liblzma5` runtime package, requires at least that patched version, and removes
+APT indexes in the same layer. Index-refresh warnings are fatal. No package
+signature checks or TLS controls are disabled. The Python digest, verified pip
+installer, removal of pip/ensurepip, app user and migration entrypoint remain.
+
+The existing disposable-container CI additionally verifies the installed
+liblzma version, absent pip/ensurepip modules and a non-root runtime identity
+before running its existing Guacamole protocol and application acceptance tests.
+This checks the resulting image rather than only the Dockerfile text.
+
+The local restricted proxy denies `deb.debian.org` with HTTP 403; the original
+base inventory was verified locally, but the patched image build requires
+hosted CI or an environment whose approved policy permits Debian mirrors.
+Do not classify this as a signature failure or bypass the proxy. This follow-up
+does not claim all Debian advisories are resolved: the other 164 previously
+recorded package/advisory entries have no scanner-reported fix. A fresh complete
+OS scan is required to establish current remaining counts. No exclusions or
+vulnerability suppressions are added, and no image is published or deployed.

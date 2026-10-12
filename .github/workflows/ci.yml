@@ -148,6 +148,13 @@ jobs:
       - run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml config --quiet
       - run: sudo mkdir -p /run/labgoblin-updater
       - run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml up -d --build
+      - name: Verify runtime security corrections
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.live-test.yml exec -T api sh -eu -c '
+            dpkg --compare-versions "$(dpkg-query -W -f="\${Version}" liblzma5)" ge 5.8.1-1+deb13u2
+            python -c "import importlib.util; assert importlib.util.find_spec(\"pip\") is None; assert importlib.util.find_spec(\"ensurepip\") is None"
+            test "$(id -u)" -ne 0
+          '
       - name: Verify bundled Guacamole protocol support
         run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml exec -T api python < backend/scripts/check_guacd.py
       - name: Wait for readiness
