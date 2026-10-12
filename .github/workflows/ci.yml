@@ -117,6 +117,68 @@ jobs:
       - run: pip install mkdocs==1.6.1
       - run: mkdocs build --strict
 
+  frontend-container-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - run: docker build -t labgoblin-web:audit frontend
+      - name: Prefetch vulnerability database without repository access
+        run: |
+          mkdir -p "$RUNNER_TEMP/frontend-trivy-cache"
+          docker run --rm --user "$(id -u):$(id -g)" --cap-drop ALL --security-opt no-new-privileges:true \
+            -v "$RUNNER_TEMP/frontend-trivy-cache:/cache" \
+            aquasec/trivy@sha256:e2b22eac59c02003d8749f5b8d9bd073b62e30fefaef5b7c8371204e0a4b0c08 \
+            image --cache-dir /cache --db-repository registry-1.docker.io/aquasec/trivy-db:2 --download-db-only
+      - name: Scan exported frontend runtime without network or daemon access
+        run: |
+          mkdir -p container-audit "$RUNNER_TEMP/frontend-container-scan"
+          docker save --output "$RUNNER_TEMP/frontend-image.tar" labgoblin-web:audit
+          docker run --rm --user "$(id -u):$(id -g)" --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges:true \
+            --tmpfs /tmp:rw,nosuid,nodev,size=128m --tmpfs /cache:rw,nosuid,nodev,size=2g \
+            -v "$RUNNER_TEMP/frontend-trivy-cache/db:/database:ro" \
+            -v "$RUNNER_TEMP/frontend-image.tar:/candidate.tar:ro" \
+            -v "$RUNNER_TEMP/frontend-container-scan:/reports" \
+            --entrypoint sh \
+            aquasec/trivy@sha256:e2b22eac59c02003d8749f5b8d9bd073b62e30fefaef5b7c8371204e0a4b0c08 \
+            -eu -c 'mkdir -p /cache/db; cp /database/* /cache/db/; exec trivy image --cache-dir /cache --skip-db-update --skip-java-db-update --offline-scan --input /candidate.tar --scanners vuln,secret --format json --output /reports/frontend.json'
+      - name: Reject fixable advisories and secrets without hiding remaining findings
+        run: |
+          python - <<'PY'
+          import collections
+          import json
+          import os
+
+          report = json.load(open(os.path.join(os.environ["RUNNER_TEMP"], "frontend-container-scan", "frontend.json")))
+          # Preserve complete advisory data and secret locations without publishing matches.
+          allowed_secret_fields = {"RuleID", "Category", "Severity", "Title", "StartLine", "EndLine", "Layer"}
+          for result in report.get("Results", []):
+              if "Secrets" in result:
+                  result["Secrets"] = [{key: value for key, value in secret.items() if key in allowed_secret_fields} for secret in result["Secrets"]]
+          with open("container-audit/frontend.json", "w") as output:
+              json.dump(report, output)
+          vulnerabilities = [v for result in report.get("Results", []) for v in result.get("Vulnerabilities", [])]
+          secrets = [s for result in report.get("Results", []) for s in result.get("Secrets", [])]
+          fixable = [v for v in vulnerabilities if v.get("FixedVersion")]
+          print("All advisory records:", len(vulnerabilities), dict(collections.Counter(v["Severity"] for v in vulnerabilities)))
+          print("Fixable advisory records:", len(fixable), "Secret findings:", len(secrets))
+          for vulnerability in vulnerabilities:
+              print(vulnerability["PkgName"], vulnerability["VulnerabilityID"], vulnerability["Severity"], vulnerability.get("FixedVersion", "no recorded fix"))
+          if fixable or secrets:
+              raise SystemExit("Container security qualification failed; review retained JSON report")
+          PY
+      - name: Preserve complete runtime security evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: frontend-container-security-${{ github.sha }}
+          path: container-audit/frontend.json
+          if-no-files-found: error
+          retention-days: 14
+
   repository-hygiene:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -148,6 +210,17 @@ jobs:
       - run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml config --quiet
       - run: sudo mkdir -p /run/labgoblin-updater
       - run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml up -d --build
+      - name: Verify patched frontend runtime libraries
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.live-test.yml exec -T web sh -eu -c '
+            for requirement in libexpat:2.8.5-r0 libpng:1.6.59-r0 nghttp2-libs:1.70.0-r0 pcre2:10.49-r0 tiff:4.7.2-r0 zlib:1.3.2-r1; do
+              package=${requirement%%:*}
+              minimum=${requirement#*:}
+              installed=$(apk list --from installed --manifest "$package" | sed "s/^$package //")
+              test -n "$installed"
+              test "$(apk version --no-network -t "$installed" "$minimum")" != "<"
+            done
+          '
       - name: Verify bundled Guacamole protocol support
         run: docker compose -f docker-compose.yml -f docker-compose.live-test.yml exec -T api python < backend/scripts/check_guacd.py
       - name: Wait for readiness

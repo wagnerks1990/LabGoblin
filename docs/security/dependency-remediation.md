@@ -257,3 +257,58 @@ docker run --rm --network none --entrypoint python labgoblin-runtime:fixed -c \
 - This is local cloud validation. Ubuntu host deployment, live infrastructure,
   real Guacamole connections and other CPU architectures are not validated.
   No merge, auto-merge, deployment or production infrastructure change occurs.
+
+## Frontend container security follow-up — 2026-10-12
+
+The original frontend runtime `nginx:1.27-alpine` resolves to index digest
+`sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10`.
+A fresh Trivy 0.67.2 scan using the same approved database records 161 Alpine
+package/advisory entries: two critical, 41 high, 76 medium and 42 low. The
+original image is Alpine 3.21.3, and many entries have available package fixes.
+
+The frontend Dockerfile now uses the supported nginx 1.31 Alpine runtime,
+pinned at index digest
+`sha256:df221db836e1754089190208cee7eeda94f233197056426eda74a43ab1abeac2`,
+and the supported Node 24 LTS builder at
+`sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1`.
+Node 20 reached end of support in April 2026. Application dependencies, nginx
+routing/security headers/listen port and asset permissions are unchanged.
+
+The optional BuildKit CA secret supports TLS-verifying npm installs behind the
+approved proxy without copying its bundle into an image layer. npm retains
+`--strict-ssl=true`. A frontend Docker context ignore file prevents host
+node_modules, old dist files, environment files and logs from replacing clean
+installed dependencies or entering the builder context. No image is published
+or deployed; the existing disposable-container CI remains the application gate.
+
+The updated pinned nginx base alone still has six fixable entries (three high,
+three medium): libexpat/CVE-2026-93990 (2.8.5-r0), libpng/CVE-2026-46675
+(1.6.59-r0), nghttp2-libs/CVE-2026-58055 (1.70.0-r0), pcre2/CVE-2026-103111
+(10.49-r0), tiff/CVE-2026-4775 (4.7.2-r0), zlib/CVE-2026-85091 (1.3.2-r1).
+The final runtime additionally upgrades installed Alpine packages, and the
+existing container integration job requires each library at or above its
+recorded fixed version. No findings are suppressed. Local image builds before
+the package upgrade passed nginx syntax validation and retain those six
+findings; the approved proxy explicitly denies Alpine mirror access (HTTP403
+for dl-cdn.alpinelinux.org), so the final installation must be qualified by
+hosted CI. Do not call the newer base or that pre-upgrade local image
+vulnerability-free.
+
+The new `frontend-container-security` CI job builds the actual final web image,
+runs the digest-pinned Trivy scanner for vulnerabilities and secrets, prints
+all advisory counts/identifiers, and retains its complete JSON as a 14-day
+artifact. Qualification rejects every advisory with a recorded available fix
+at every severity and every secret finding. Unfixed records remain visible;
+there are no ignored-advisory lists or scanner exclusions. This supplements
+npm auditing and the existing container application tests. The upload action
+is pinned to verified upload-artifact v4.6.2 commit. Add this proven check to
+main protections after its hosted validation succeeds; existing wrong required
+contexts must first be repaired by an authorized administrator.
+Secret matches and surrounding source text are removed before artifact upload;
+only rule/severity/locations remain. Raw scanner output stays in runner temp,
+outside the artifact path, so a failed parser cannot upload unredacted matches.
+The database download container has no source/archive/daemon mounts. Image
+scanning consumes a host-exported read-only archive with network disabled,
+read-only root/database mounts, dropped capabilities, no-new-privileges and
+bounded temporary cache mounts. It never receives the Docker daemon socket.
+Scanner-job checkout credentials are not persisted.
