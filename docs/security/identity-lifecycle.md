@@ -110,3 +110,9 @@ A rollback must retain the `bcrypt_sha256` verification scheme once any new
 hashes have been stored. Reverting the verifier to bcrypt-only would deny those
 users authentication. Recovery does not require schema changes or rewriting
 stored hashes; never convert hashes by truncating or extracting their fields.
+
+Guided student-account setup accepts the same complete UTF-8 password as other
+creation/reset workflows. An authenticated user with a legacy raw-bcrypt hash
+may change its previously discarded suffix to establish a new complete identity;
+the password-change path hashes the replacement and revokes sessions normally.
+An exactly unchanged submitted password is still rejected.

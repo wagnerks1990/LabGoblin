@@ -342,3 +342,27 @@ def test_cookie_setup_requires_same_origin_and_live_session(setup_context):
         db.delete(session)
     db.commit()
     assert client.get("/api/admin/lab-setups/catalog", headers=scope).status_code == 401
+
+
+def test_setup_accepts_complete_long_student_passwords(setup_context):
+    db, client, users, headers, template, _ = setup_context
+    prefix = "A1!" + "é" * 36
+    password = prefix + "first"
+    body = payload(
+        template,
+        users[3],
+        new_students=[
+            {
+                "username": "long-password-learner",
+                "email": "long-password@example.test",
+                "password": password,
+            }
+        ],
+    )
+    response = client.post("/api/admin/lab-setups", json=body, headers=headers[0])
+    assert response.status_code == 200, response.text
+    assert password not in response.text
+    account = db.query(User).filter(User.username == "long-password-learner").one()
+    assert account.force_password_change
+    assert verify_password(password, account.password_hash)
+    assert not verify_password(prefix + "second", account.password_hash)

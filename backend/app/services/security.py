@@ -22,6 +22,10 @@ def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 
+def password_needs_upgrade(hashed: str) -> bool:
+    return pwd_context.needs_update(hashed)
+
+
 def validate_password(password: str) -> None:
     if len(password) < settings.password_min_length:
         raise HTTPException(

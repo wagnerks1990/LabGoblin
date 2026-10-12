@@ -11,6 +11,7 @@ from app.services.security import (
     create_access_token,
     hash_password,
     new_token_id,
+    password_needs_upgrade,
     validate_password,
     verify_password,
 )
@@ -189,7 +190,10 @@ def change_password(
     if not verify_password(current_password, user.password_hash):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
     validate_password(new_password)
-    if verify_password(new_password, user.password_hash):
+    if new_password == current_password or (
+        not password_needs_upgrade(user.password_hash)
+        and verify_password(new_password, user.password_hash)
+    ):
         raise HTTPException(
             status_code=422,
             detail="New password must be different from the current password",
