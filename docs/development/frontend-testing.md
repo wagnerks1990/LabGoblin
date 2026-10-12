@@ -26,6 +26,36 @@ python scripts/check_repository_hygiene.py
 mkdocs build --strict
 ```
 
+## Development dependency security
+
+Keep the complete `npm audit --audit-level=moderate` gate, including development
+dependencies. A production-only audit is useful for attribution, but does not
+replace the full gate. Do not use `npm audit fix --force` to introduce an
+unreviewed major upgrade.
+
+The October 2026 audit reported nine affected package entries (seven high and
+two moderate), including parents affected through their dependencies. All were
+development-only; four packages carried the underlying advisory records:
+
+| Package and original version | Dependency chain | Advisory and remediation |
+| --- | --- | --- |
+| `brace-expansion` 2.1.4 | `openapi-typescript` -> `@redocly/openapi-core` -> `minimatch` | [GHSA-q2hr-2g5m-vwhr](https://github.com/advisories/GHSA-q2hr-2g5m-vwhr), [GHSA-qhr7-859c-m2p7](https://github.com/advisories/GHSA-qhr7-859c-m2p7), [GHSA-6j4f-fj2g-mc7p](https://github.com/advisories/GHSA-6j4f-fj2g-mc7p): resolve 2.1.7, which covers all three fixes. |
+| `braces` 3.0.3 | `tailwindcss` -> `chokidar` or `micromatch`; also through `fast-glob` -> `micromatch` | [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm): no published patched version at review time; remove the unused Tailwind dependency chain. |
+| `postcss-selector-parser` 6.1.4 | `tailwindcss`, directly and through `postcss-nested` | [GHSA-rj75-hqrm-r3gf](https://github.com/advisories/GHSA-rj75-hqrm-r3gf): patched in 7.1.6; remove the unused Tailwind chain rather than force a transitive major upgrade. |
+| `source-map-js` 1.2.1 | `vite` -> `postcss`; previously also through Tailwind's PostCSS tooling | [GHSA-68fv-2mgg-jv7q](https://github.com/advisories/GHSA-68fv-2mgg-jv7q): resolve 1.2.2. |
+
+Tailwind was the only direct dependency among the nine audit entries. It was
+not used by application imports, CSS directives, configuration, or the Vite
+build. The application uses its authored CSS and shared design tokens; removing
+the unused package preserves that pipeline. Its removal also eliminates the
+affected `chokidar`, `micromatch`, `fast-glob`, `postcss-nested`, and
+`postcss-selector-parser` entries. No advisory is suppressed or accepted.
+
+The two patched versions fit their existing parents' semver ranges and are
+recorded in `package-lock.json`. Runtime dependency records remain unchanged.
+Use `npm ci`, all frontend tests, the production build, branding and repository
+hygiene checks, and the full audit to verify future dependency changes.
+
 ## View-state matrix
 
 For every changed data-backed page, validate:
