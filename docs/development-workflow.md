@@ -30,3 +30,29 @@ production support; the pre-production acceptance gates remain authoritative.
 - Real-cluster, browser-console, TLS, update-recovery, and restore tests belong
   to the isolated acceptance environment and must be recorded in the
   pre-production acceptance checklist.
+
+## Hosted Wiki publication
+
+The `Publish documentation Wiki` workflow validates and copies the public,
+tracked `docs/` Markdown pages to the initialized GitHub Wiki after successful
+main CI, or on an explicit manual dispatch from main. It skips superseded
+validated commits before rendering and checks freshness again before pushing. `WIKI_TOKEN` must have access to the
+repository Wiki. `docs/index.md` becomes `Home`; nested pages use `--` between
+path components, and local Markdown links are rewritten to those page names.
+Existing pages are retained to preserve unique Wiki edits; edit canonical
+pages in `docs/` because synchronization replaces their matching Wiki pages.
+The MkDocs site remains the full-fidelity destination for images and rendered
+navigation. The workflow publishes documentation only and does not deploy the
+application or connect to classroom infrastructure.
+
+Publication runs on a fresh runner after a separate no-secret documentation
+validation job. The publishing job installs no dependencies and starts its
+standard-library-only renderer with Python `-I -S`, preventing site hooks or
+user Python configuration from running with the Wiki credential. Freshness
+lookups authenticate with the job's read-only token and fail on authentication
+or transport errors. A generated-page manifest removes only previously generated
+pages after document renames/removals; unrelated contributor Wiki pages remain.
+The workflow always checks out the trusted `main` ref. It compares that checkout
+against the completed CI revision before executing validation code, then requires
+the publishing checkout to match that exact validated commit. Event-provided
+SHAs are comparison values and never checkout targets.
