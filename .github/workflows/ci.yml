@@ -128,7 +128,7 @@ jobs:
       - name: Prefetch vulnerability database without repository access
         run: |
           mkdir -p "$RUNNER_TEMP/frontend-trivy-cache"
-          docker run --rm --cap-drop ALL --security-opt no-new-privileges:true \
+          docker run --rm --user "$(id -u):$(id -g)" --cap-drop ALL --security-opt no-new-privileges:true \
             -v "$RUNNER_TEMP/frontend-trivy-cache:/cache" \
             aquasec/trivy@sha256:e2b22eac59c02003d8749f5b8d9bd073b62e30fefaef5b7c8371204e0a4b0c08 \
             image --cache-dir /cache --db-repository registry-1.docker.io/aquasec/trivy-db:2 --download-db-only
@@ -136,7 +136,7 @@ jobs:
         run: |
           mkdir -p container-audit "$RUNNER_TEMP/frontend-container-scan"
           docker save --output "$RUNNER_TEMP/frontend-image.tar" labgoblin-web:audit
-          docker run --rm --network none --read-only --cap-drop ALL \
+          docker run --rm --user "$(id -u):$(id -g)" --network none --read-only --cap-drop ALL \
             --security-opt no-new-privileges:true \
             --tmpfs /tmp:rw,nosuid,nodev,size=128m --tmpfs /cache:rw,nosuid,nodev,size=2g \
             -v "$RUNNER_TEMP/frontend-trivy-cache/db:/database:ro" \
@@ -144,7 +144,7 @@ jobs:
             -v "$RUNNER_TEMP/frontend-container-scan:/reports" \
             --entrypoint sh \
             aquasec/trivy@sha256:e2b22eac59c02003d8749f5b8d9bd073b62e30fefaef5b7c8371204e0a4b0c08 \
-            -eu -c 'mkdir -p /cache/db; cp -a /database/. /cache/db/; exec trivy image --cache-dir /cache --skip-db-update --skip-java-db-update --offline-scan --input /candidate.tar --scanners vuln,secret --format json --output /reports/frontend.json'
+            -eu -c 'mkdir -p /cache/db; cp /database/* /cache/db/; exec trivy image --cache-dir /cache --skip-db-update --skip-java-db-update --offline-scan --input /candidate.tar --scanners vuln,secret --format json --output /reports/frontend.json'
       - name: Reject fixable advisories and secrets without hiding remaining findings
         run: |
           python - <<'PY'
