@@ -257,3 +257,22 @@ docker run --rm --network none --entrypoint python labgoblin-runtime:fixed -c \
 - This is local cloud validation. Ubuntu host deployment, live infrastructure,
   real Guacamole connections and other CPU architectures are not validated.
   No merge, auto-merge, deployment or production infrastructure change occurs.
+
+## Fixable Debian xz runtime follow-up
+
+The retained image inventory reports two fixable `liblzma5` entries,
+`DSA-6549-1` and `TEMP-1147318-639065`, with fixed version
+`5.8.1-1+deb13u2`. Refresh only that installed runtime library through Debian's
+signed package repositories. The build refuses a version below the recorded fix,
+keeps the pinned Python base and non-root runtime, and removes apt index files.
+It neither adds a runtime installer/compiler nor suppresses any advisory. A proxy
+CA, when supplied, remains a temporary BuildKit mount; TLS/signature checks stay
+active. Other unfixed Debian advisories remain separate findings.
+
+Local build command: `docker --host=unix:///var/run/docker.sock build --secret
+id=proxy_ca,src=/etc/ssl/certs/ca-certificates.crt -t labgoblin-audit-backend backend`.
+The local proxy denies `deb.debian.org` with HTTP 403, so the apt step cannot run
+here. Its downstream unsigned-repository message is a consequence of the denied
+InRelease download, not a reason to disable signature verification. Hosted CI
+must build the actual image; the final image still needs a fresh OS scan and
+runtime qualification before merge. No production contact or deployment occurs.
