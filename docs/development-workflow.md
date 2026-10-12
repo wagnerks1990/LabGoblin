@@ -52,3 +52,7 @@ user Python configuration from running with the Wiki credential. Freshness
 lookups authenticate with the job's read-only token and fail on authentication
 or transport errors. A generated-page manifest removes only previously generated
 pages after document renames/removals; unrelated contributor Wiki pages remain.
+The workflow always checks out the trusted `main` ref. It compares that checkout
+against the completed CI revision before executing validation code, then requires
+the publishing checkout to match that exact validated commit. Event-provided
+SHAs are comparison values and never checkout targets.

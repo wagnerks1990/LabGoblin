@@ -19,15 +19,32 @@ jobs:
     if: (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      qualified: ${{ steps.revision.outputs.qualified }}
+      sha: ${{ steps.revision.outputs.sha }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: main
           persist-credentials: false
+      - name: Match trusted main to the completed validation revision
+        id: revision
+        env:
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          current_sha=$(git rev-parse HEAD)
+          if [ "$current_sha" = "$EXPECTED_SHA" ]; then
+            echo 'qualified=true' >> "$GITHUB_OUTPUT"
+            echo "sha=$current_sha" >> "$GITHUB_OUTPUT"
+          else
+            echo 'Validated revision is no longer main; skip publication.'
+          fi
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        if: steps.revision.outputs.qualified == 'true'
         with:
           python-version: '3.12'
       - name: Validate public documentation without publication credentials
+        if: steps.revision.outputs.qualified == 'true'
         run: |
           python scripts/check_branding.py
           python scripts/check_repository_hygiene.py
@@ -36,23 +53,29 @@ jobs:
 
   publish:
     needs: validate
+    if: needs.validate.outputs.qualified == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: main
           persist-credentials: false
       - name: Require the validated commit to remain current main
         id: freshness
         env:
           REPOSITORY: ${{ github.repository }}
           READ_TOKEN: ${{ github.token }}
+          VALIDATED_SHA: ${{ needs.validate.outputs.sha }}
         run: |
           export GIT_CONFIG_COUNT=1
           export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
           export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$READ_TOKEN" | base64 -w0)"
-          if scripts/wiki_is_current.sh "$(git rev-parse HEAD)" "https://github.com/$REPOSITORY.git"; then
+          if [ "$(git rev-parse HEAD)" != "$VALIDATED_SHA" ]; then
+            echo 'Main advanced after validation; skip publication.'
+            exit 0
+          fi
+          if scripts/wiki_is_current.sh "$VALIDATED_SHA" "https://github.com/$REPOSITORY.git"; then
             echo 'current=true' >> "$GITHUB_OUTPUT"
           else
             result=$?
