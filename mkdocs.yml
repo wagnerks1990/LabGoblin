@@ -21,6 +21,7 @@ nav:
   - Identity lifecycle: security/identity-lifecycle.md
   - Classroom runs and assignments: classroom/lab-runs-and-assignments.md
   - Security: security/threat-model.md
+  - Dependency remediation: security/dependency-remediation.md
   - AI: ai/ai-safety.md
   - Operations:
       - Deployment: operations/deployment.md
