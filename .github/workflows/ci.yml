@@ -125,10 +125,10 @@ jobs:
       - run: docker build -t labgoblin-web:audit frontend
       - name: Scan actual frontend runtime image
         run: |
-          mkdir -p container-audit
+          mkdir -p container-audit "$RUNNER_TEMP/frontend-container-scan"
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            -v "$PWD/container-audit:/reports" \
+            -v "$RUNNER_TEMP/frontend-container-scan:/reports" \
             aquasec/trivy@sha256:e2b22eac59c02003d8749f5b8d9bd073b62e30fefaef5b7c8371204e0a4b0c08 \
             image --db-repository registry-1.docker.io/aquasec/trivy-db:2 \
             --scanners vuln,secret --format json --output /reports/frontend.json labgoblin-web:audit
@@ -137,8 +137,16 @@ jobs:
           python - <<'PY'
           import collections
           import json
+          import os
 
-          report = json.load(open("container-audit/frontend.json"))
+          report = json.load(open(os.path.join(os.environ["RUNNER_TEMP"], "frontend-container-scan", "frontend.json")))
+          # Preserve complete advisory data and secret locations without publishing matches.
+          allowed_secret_fields = {"RuleID", "Category", "Severity", "Title", "StartLine", "EndLine", "Layer"}
+          for result in report.get("Results", []):
+              if "Secrets" in result:
+                  result["Secrets"] = [{key: value for key, value in secret.items() if key in allowed_secret_fields} for secret in result["Secrets"]]
+          with open("container-audit/frontend.json", "w") as output:
+              json.dump(report, output)
           vulnerabilities = [v for result in report.get("Results", []) for v in result.get("Vulnerabilities", [])]
           secrets = [s for result in report.get("Results", []) for s in result.get("Secrets", [])]
           fixable = [v for v in vulnerabilities if v.get("FixedVersion")]

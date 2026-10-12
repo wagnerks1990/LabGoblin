@@ -304,3 +304,6 @@ npm auditing and the existing container application tests. The upload action
 is pinned to verified upload-artifact v4.6.2 commit. Add this proven check to
 main protections after its hosted validation succeeds; existing wrong required
 contexts must first be repaired by an authorized administrator.
+Secret matches and surrounding source text are removed before artifact upload;
+only rule/severity/locations remain. Raw scanner output stays in runner temp,
+outside the artifact path, so a failed parser cannot upload unredacted matches.
