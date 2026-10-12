@@ -257,3 +257,21 @@ docker run --rm --network none --entrypoint python labgoblin-runtime:fixed -c \
 - This is local cloud validation. Ubuntu host deployment, live infrastructure,
   real Guacamole connections and other CPU architectures are not validated.
   No merge, auto-merge, deployment or production infrastructure change occurs.
+
+## Container maintenance follow-up
+
+The pinned Python base remains unchanged. The backend now refreshes Debian
+packages during the build, without installing additional packages, and removes
+APT indexes afterward. The security repository supplies `liblzma5`
+`5.8.1-1+deb13u2` for the recorded `DSA-6549-1` and
+`TEMP-1147318-639065` findings. Other Debian advisories without a vendor fix
+remain upstream blockers; package refresh does not imply a vulnerability-free
+image. The SHA-256 verified pip installer and removal of pip/ensurepip remain.
+
+The frontend builder uses pinned Node 24 LTS rather than the Node 20 image,
+matching the Vite 8 and plugin-react 6 engine requirements. The nginx runtime
+moves from 1.27 to the maintained 1.31 Alpine image, also pinned by digest.
+The optional BuildKit `proxy_ca` secret supports TLS-verifying npm installation
+behind an HTTPS proxy without embedding a private CA in the output image.
+These are build definitions; no deployment or production image promotion is
+performed by repository CI.
