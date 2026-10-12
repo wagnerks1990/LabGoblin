@@ -185,3 +185,39 @@ def test_admin_password_reset_revokes_target_sessions():
         assert "sessions_revoked" in event.metadata_json
     finally:
         _teardown(engine, db)
+
+
+def test_legacy_long_password_suffix_change_upgrades_hash_and_revokes_session():
+    from passlib.hash import bcrypt
+    from app.services.security import verify_password
+
+    engine, db, user, client = _setup()
+    try:
+        prefix = "A1!" + "a" * 69
+        current = prefix + "old"
+        replacement = prefix + "new"
+        user.password_hash = bcrypt.hash(current)
+        db.commit()
+        assert _login(client, current).status_code == 204
+        old_session = db.query(AuthSession).filter(AuthSession.user_id == user.id).one()
+        old_version = user.token_version
+        unchanged = client.post(
+            "/api/auth/change-password",
+            json={"current_password": current, "new_password": current},
+        )
+        assert unchanged.status_code == 422
+        assert old_session.revoked_at is None
+        assert user.token_version == old_version
+        response = client.post(
+            "/api/auth/change-password",
+            json={"current_password": current, "new_password": replacement},
+        )
+        assert response.status_code == 204, response.text
+        assert user.password_hash.startswith("$bcrypt-sha256$")
+        assert verify_password(replacement, user.password_hash)
+        assert not verify_password(current, user.password_hash)
+        assert old_session.revoked_at is not None
+        assert old_session.revoke_reason == "password_changed"
+        assert user.token_version == old_version + 1
+    finally:
+        _teardown(engine, db)

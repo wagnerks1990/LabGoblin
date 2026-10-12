@@ -232,10 +232,6 @@ def _new_students(db, payload, user, organization):
             raise HTTPException(422, "Each new student needs a username and email.")
         password = item.password.get_secret_value()
         validate_password(password)
-        if len(password.encode("utf-8")) > 72:
-            raise HTTPException(
-                422, "Initial passwords must fit within 72 UTF-8 bytes."
-            )
         if (
             db.query(User)
             .filter(or_(User.username == username, User.email == email))
