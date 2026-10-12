@@ -47,3 +47,17 @@ These checks do not validate a live Proxmox cluster, host networking, systemd
 permissions, browser compatibility, TLS termination, update failure recovery,
 or real backup restoration. Record those results with the
 [pre-production acceptance checklist](../operations/preproduction-acceptance.md).
+
+## Compatible backend maintenance updates
+
+Keep `bcrypt==4.0.1` while the current Passlib 1.7.4 password backend remains.
+Passlib's backend self-check hashes a long test vector; bcrypt 5 rejects it with
+`ValueError` even when the requested application password is short, breaking
+bootstrap and password hashing. Upgrading bcrypt requires replacing or adapting
+the password backend with regression coverage for existing stored hashes first.
+The existing password/session tests remain mandatory.
+
+Ruff remains at the repository's validated 0.12.12 version. A formatter-major
+upgrade needs a separate reviewed formatting migration rather than making a
+mixed runtime dependency update fail its formatting gate. Other compatible
+runtime/tooling updates can proceed through the complete existing CI gates.
