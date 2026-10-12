@@ -35,7 +35,8 @@ production support; the pre-production acceptance gates remain authoritative.
 
 The `Publish documentation Wiki` workflow validates and copies the public,
 tracked `docs/` Markdown pages to the initialized GitHub Wiki after successful
-main CI, or on an explicit manual dispatch. `WIKI_TOKEN` must have access to the
+main CI, or on an explicit manual dispatch from main. It skips superseded
+validated commits before rendering and checks freshness again before pushing. `WIKI_TOKEN` must have access to the
 repository Wiki. `docs/index.md` becomes `Home`; nested pages use `--` between
 path components, and local Markdown links are rewritten to those page names.
 Existing pages are retained to preserve unique Wiki edits; edit canonical
