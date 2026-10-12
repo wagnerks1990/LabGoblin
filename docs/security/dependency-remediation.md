@@ -84,3 +84,176 @@ The environment-only PyJWT constraint and its embedded installer copy were refre
 Only GitHub, Python/npm registries and guarded loopback development services were used. No production Proxmox, Guacamole, classroom infrastructure or physical devices were contacted. Network snapshot is restricted, VPN is unconfigured, and TCP grants are empty; the status tool reports enforcement as unknown, so this is not claimed as independently verified egress enforcement.
 
 No merge, auto-merge, deployment or production mutation is authorized by this change. Live Ubuntu/nginx/systemd, real Proxmox, Guacamole consoles, browser acceptance, TLS, backup/restore and update-recovery checks remain separate acceptance work. Zero dependency findings is a point-in-time advisory result, not production certification.
+
+
+## Runtime Docker pip follow-up — 2026-10-12
+
+Main commit `2fc4196` (after PR #170) still used unpinned `python:3.12-slim`.
+The following identities are from local **linux/amd64** builds, not an inspection
+of a deployed production container. A mutable tag cannot establish what an
+older deployment used.
+
+| Identity | Original | Corrected |
+| --- | --- | --- |
+| Base reference | `python:3.12-slim` | `python:3.12.15-slim-trixie@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1` |
+| Resolved base index digest | `sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1` | Same, now explicitly pinned |
+| Resolved amd64 base manifest | `sha256:2b4f19dae3a777dfc3b76730bda1e82e1f66ab2a2686fa93ca78edbfb4f04ffe` | Same |
+| Python / distribution | Python 3.12.15 / Debian 13.7 (trixie) | Same |
+| Local resulting image configuration ID | `sha256:dafa104c92dc61c245b129af9a0818a4bda8df97faa2c63c8ea29fc8d4d301f8` | `sha256:c1f3c40f21b1622e08a7047a3578d3b91cab91024d68cd2243421c586cfb5987` |
+| Installed runtime pip | 25.0.1 | Absent; verified 26.2 used during build only |
+
+Local image configuration IDs are not registry manifest digests. No application
+image was published. The latest resolved base still inherits pip 25.0.1, so a
+base pin alone does not fix this finding. The existing approved pip 26.2 version
+from development requirements is installed as a wheel with `--require-hashes`,
+`--only-binary=:all:` and `--no-deps`, then its imported version is asserted before
+application dependencies are installed. The PyPI wheel SHA-256 is
+`931c303696af6fa3417112103b1cad26890e5a07eccb5b99783700e33f2b8aad`.
+`pip check` passes before pip is uninstalled. The standard-library `ensurepip`
+bootstrap package (including its bundled old pip wheel) is removed too.
+
+No runtime requirement, dependency version, entrypoint, migration, API behavior,
+TLS setting or runtime user was changed. The optional BuildKit `proxy_ca` secret
+allows TLS-verifying builds with a combined CA bundle; it is never copied into
+an image layer. Normal builds use the base's standard certificate trust. The
+final filesystem contains neither pip, ensurepip, a pip cache, the temporary
+requirements file, the CA mount, setuptools, wheel, gcc nor make. System package
+management and Debian runtime libraries inherited from the slim base remain.
+
+### Actual-image audits and remaining findings
+
+Both images were audited inside their containers with pip-audit 2.9.0, using
+read-only external audit tooling and `--path /usr/local/lib/python3.12/site-packages
+--format json --aliases`. This scopes the audit to the actual image's installed
+packages; the auditor's own environment is excluded. The original single-stage
+runtime had all six pip advisories listed above (five moderate, one low), with
+no other installed Python findings. The corrected runtime has **zero** installed
+Python findings. Runtime-manifest and aligned development-environment audits
+also report zero, without ignored advisories. Audit tooling is not installed in
+the final image.
+
+Trivy 0.67.2 (`aquasec/trivy@sha256:e2b22eac59c02003d8749f5b8d9bd073b62e30fefaef5b7c8371204e0a4b0c08`)
+scanned the actual local Docker images with `--scanners vuln --format json`.
+The database was downloaded via `registry-1.docker.io/aquasec/trivy-db:2`, updated
+at `2026-10-12T19:08:28Z`; the same cached database was used for the comparison.
+Trivy independently confirms **six → zero** pip/Python findings. There are no
+separate builder stages in either application Dockerfile. Pip 26.2 is transient
+in the corrected install step and absent from the merged runtime filesystem.
+Inherited base layers still contain historical installer bytes; deletion does
+not rewrite upstream layers. A layer-history or build-cache inventory must not
+be confused with packages executable in the running container. This change
+does not claim those historical bytes have been physically purged.
+
+**The whole image is not vulnerability-free.** Both scans report the same 166
+Debian package/advisory entries: 44 high, 58 medium, 61 low, three unknown, and
+zero critical. These represent 73 distinct scanner identifiers, rather than
+166 distinct CVEs. Only two entries report fixes: `liblzma5` 5.8.1-1+deb13u1,
+`DSA-6549-1` and `TEMP-1147318-639065`, with 5.8.1-1+deb13u2 recorded as fixed.
+No finding was hidden or dismissed. OS package remediation remains separate
+from this narrow installer follow-up; this report does not approve deployment.
+
+### Runtime software inventory
+
+The pinned base supplies Python 3.12.15, its standard library (except ensurepip),
+and Debian 13.7. `dpkg-query` lists 87 installed binary packages; Trivy analyzes
+93 OS package records. The base identity above fixes the inherited OS inventory.
+The application adds the following 46 installed Python distributions. Comparing
+original and corrected inventories shows only removal of pip 25.0.1; all
+application and transitive versions are identical between these builds. The
+existing direct requirements remain pinned; transitive requirements retain the
+repository's existing resolution policy.
+
+```text
+APScheduler==3.10.4
+Mako==1.4.3
+MarkupSafe==3.0.4
+PyJWT==2.15.0
+PyYAML==6.0.3
+SQLAlchemy==2.0.35
+alembic==1.13.2
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.15.1
+asyncssh==2.24.0
+bcrypt==4.0.1
+certifi==2026.7.22
+cffi==2.1.1
+click==8.5.0
+cryptography==50.0.2
+dnspython==2.9.0
+email_validator==2.2.0
+fastapi==0.141.1
+greenlet==3.5.6
+h11==0.16.0
+httpcore==1.0.9
+httptools==0.9.0
+httpx==0.27.2
+idna==3.20
+passlib==1.7.4
+psycopg-binary==3.3.4
+psycopg==3.3.4
+pycparser==3.11
+pydantic-settings==2.5.2
+pydantic==2.14.1
+pydantic_core==2.50.1
+python-dotenv==1.2.4
+python-multipart==0.0.32
+pytz==2026.5
+redis==5.0.8
+six==1.17.0
+sniffio==1.3.1
+starlette==1.7.0
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+tzlocal==5.4.4
+uvicorn==0.30.6
+uvloop==0.23.0
+watchfiles==1.3.0
+websockets==17.1
+```
+
+Reproduce the OS and Python inventories from a built image without network access:
+
+```sh
+docker run --rm --network none --entrypoint dpkg-query labgoblin-runtime:fixed -W
+docker run --rm --network none --entrypoint python labgoblin-runtime:fixed -c \
+  'import importlib.metadata as m; print("\n".join(sorted("{}=={}".format(d.metadata["Name"], d.version) for d in m.distributions())))'
+```
+
+### Validation and isolation
+
+- Both backend images built successfully. The original reproduction used only
+  an ephemeral Dockerfile adaptation to mount the cloud CA bundle during pip
+  installation; no CA was persisted and TLS verification stayed enabled.
+- Corrected image inspection confirms `USER app` (UID 100/GID 101), unchanged
+  `docker-entrypoint`, and unchanged uvicorn command. A read-only filesystem,
+  all capabilities dropped, and `no-new-privileges` passed runtime checks.
+- Guarded checkout suite: **320 passed, 68 warnings**. The preinstalled cloud
+  environment initially retained PyJWT 2.13.0 and failed two already-merged JWT
+  regression tests; aligning its local dependencies with main (PyJWT 2.15.0,
+  pip 26.2) resolves both. No test was weakened.
+- Final-image suite: **320 passed, 68 warnings**, with application and dependency
+  imports verified to come from the image and externally mounted pytest tooling.
+  The test runner uses a read-only repository mount, no network, and an executable
+  temporary filesystem for mocked shell commands; tooling is outside the runtime
+  inventory. The separate default-entrypoint validation uses the actual app user.
+- Trivy secret scanning of the corrected image reports **zero findings**.
+- The default non-root entrypoint with `RUN_MIGRATIONS=true` migrates a fresh,
+  disposable PostgreSQL 16 database. Replaying `alembic upgrade head` succeeds;
+  repository and database both have the single head `20260914_0019`;
+  `alembic check` reports no new upgrade operations. The database contains zero
+  Proxmox cluster records.
+- Actual-container `/api/health` returns `{"status":"ok"}` and `/api/ready`
+  returns `{"ready":true}`. Startup uses an internal-only Docker network,
+  no published ports, a read-only root filesystem, no capabilities and
+  `no-new-privileges`. Its only service peer is the disposable database;
+  the scheduler is disabled and Proxmox/guacd destinations are loopback.
+  Containers, database volume, test environment files and network are removed
+  after validation. No production Proxmox or Guacamole host is contacted.
+- Python compile, Ruff formatting/lint, Bandit, branding, repository hygiene,
+  entrypoint shell syntax and diff whitespace checks pass. The final diff is
+  confined to the backend Dockerfile and this existing report, with no secrets,
+  private environment files, runtime databases or generated artifacts committed.
+- This is local cloud validation. Ubuntu host deployment, live infrastructure,
+  real Guacamole connections and other CPU architectures are not validated.
+  No merge, auto-merge, deployment or production infrastructure change occurs.
