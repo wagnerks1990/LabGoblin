@@ -28,3 +28,25 @@ def test_nested_links_and_home_are_resolved_without_touching_external_urls(tmp_p
         "[Home](Home) [Web](https://example.test/a.md) [Anchor](#local)"
     )
     assert (output / "Existing.md").read_text() == "Preserve unique work"
+
+
+def test_freshness_guard_rejects_a_superseded_validated_commit(tmp_path):
+    import subprocess
+
+    remote = tmp_path / "repository"
+    remote.mkdir()
+
+    def git(*args):
+        return subprocess.check_output(
+            ["git", "-C", str(remote), *args], text=True
+        ).strip()
+
+    git("init", "-b", "main")
+    git("config", "user.name", "Synthetic test")
+    git("config", "user.email", "test@example.invalid")
+    git("commit", "--allow-empty", "-m", "First validated revision")
+    validated = git("rev-parse", "HEAD")
+    guard = Path(__file__).parents[1] / "scripts" / "wiki_is_current.sh"
+    assert subprocess.run([str(guard), validated, str(remote)]).returncode == 0
+    git("commit", "--allow-empty", "-m", "Newer revision")
+    assert subprocess.run([str(guard), validated, str(remote)]).returncode != 0

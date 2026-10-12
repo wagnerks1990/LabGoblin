@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   publish:
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    if: (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -33,7 +33,18 @@ jobs:
           python scripts/check_repository_hygiene.py
           pip install mkdocs==1.6.1
           mkdocs build --strict
+      - name: Require the validated commit to remain current main
+        id: freshness
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          if scripts/wiki_is_current.sh "$(git rev-parse HEAD)" "https://github.com/$REPOSITORY.git"; then
+            echo 'current=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'A newer main commit exists; skip stale Wiki publication.'
+          fi
       - name: Synchronize tracked documentation
+        if: steps.freshness.outputs.current == 'true'
         env:
           WIKI_TOKEN: ${{ secrets.WIKI_TOKEN }}
           REPOSITORY: ${{ github.repository }}
@@ -51,5 +62,9 @@ jobs:
           git -C "$wiki_dir" add '*.md'
           if ! git -C "$wiki_dir" diff --cached --quiet; then
             git -C "$wiki_dir" commit -m "Publish LabGoblin documentation from $(git rev-parse HEAD)"
-            git -C "$wiki_dir" push origin HEAD
+            if scripts/wiki_is_current.sh "$(git rev-parse HEAD)" "https://github.com/$REPOSITORY.git"; then
+              git -C "$wiki_dir" push origin HEAD
+            else
+              echo 'Main advanced during rendering; skip stale Wiki publication.'
+            fi
           fi
