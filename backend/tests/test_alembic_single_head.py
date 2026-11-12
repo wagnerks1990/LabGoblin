@@ -9,4 +9,4 @@ def test_single_alembic_head():
     script = ScriptDirectory.from_config(cfg)
     heads = script.get_heads()
     assert len(heads) == 1, f"Expected one alembic head, found {heads}"
-    assert heads == ["20261112_0020"]
+    assert heads == ["20261112_0021"]

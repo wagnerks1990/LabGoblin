@@ -5,7 +5,7 @@ import secrets
 from datetime import timedelta
 
 from fastapi import HTTPException
-from sqlalchemy import case, func
+from sqlalchemy import case
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
@@ -14,6 +14,7 @@ from app.services.audit_service import record_audit_event
 from app.services.auth_service import revoke_all_sessions
 from app.services.email_service import address_hash, enqueue, get_settings, now
 from app.services.security import hash_password, validate_password
+from app.services.account_identity import email_column
 
 
 def throttle(db, identifier, *, limit):
@@ -94,7 +95,7 @@ def request_recovery(db, email, client_ip):
         user = (
             db.query(User)
             .filter(
-                func.lower(User.email) == str(email).lower(), User.is_active.is_(True)
+                email_column() == str(email).strip().lower(), User.is_active.is_(True)
             )
             .with_for_update()
             .first()

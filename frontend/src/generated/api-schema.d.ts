@@ -6032,7 +6032,7 @@ export interface components {
             /** Token */
             token: string;
             /** Username */
-            username: string;
+            username?: string | null;
         };
         /** ClassCreate */
         ClassCreate: {
@@ -6704,10 +6704,12 @@ export interface components {
         };
         /** LoginRequest */
         LoginRequest: {
+            /** Email */
+            email?: string | null;
             /** Password */
             password: string;
             /** Username */
-            username: string;
+            username?: string | null;
         };
         /** PasswordChangeRequest */
         PasswordChangeRequest: {
@@ -7164,6 +7166,11 @@ export interface components {
         };
         /** SetupMember */
         SetupMember: {
+            /**
+             * Email
+             * @default
+             */
+            email: string;
             /** Is Active */
             is_active: boolean;
             /** Role */
@@ -7187,7 +7194,10 @@ export interface components {
              * Format: password
              */
             password: string;
-            /** Username */
+            /**
+             * Username
+             * @default
+             */
             username: string;
         };
         /** SyncCtTemplateRequest */

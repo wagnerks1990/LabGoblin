@@ -5,7 +5,7 @@ import FormField from '../components/ui/FormField'
 import AccountRecovery from './AccountRecovery'
 
 export default function LoginPage({ onLogin, setMessage }) {
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -16,7 +16,7 @@ export default function LoginPage({ onLogin, setMessage }) {
     if (busy) return
     setBusy(true)
     try {
-      await api.post('/auth/login', { username, password })
+      await api.post('/auth/login', { email: email.trim(), password })
       setMessage({ type: 'success', text: 'Welcome back. Login successful.' })
       await onLogin()
     } catch (error) {
@@ -35,15 +35,16 @@ export default function LoginPage({ onLogin, setMessage }) {
         <div><div className='brand-wordmark'>Lab<span>Goblin</span></div><div className='brand-subtitle'>Virtual Lab Provisioning & Management</div></div>
       </div>
       <div><h1 id='login-title'>Welcome to your lab</h1><p className='muted' id='login-help'>Access your assigned virtual labs.</p></div>
-      <FormField label='Username' id='login-username' required>
-        <input className='ui-input' autoComplete='username' aria-describedby='login-help' value={username} onChange={event => setUsername(event.target.value)} autoFocus />
+      <FormField label='Email address' id='login-email' required>
+        <input className='ui-input' type='email' autoComplete='username' inputMode='email' autoCapitalize='none' spellCheck={false} aria-describedby='login-help' value={email} onChange={event => setEmail(event.target.value)} autoFocus />
       </FormField>
       <FormField label='Password' id='login-password' required>
         <input className='ui-input' autoComplete='current-password' type={showPassword ? 'text' : 'password'} value={password} onChange={event => setPassword(event.target.value)} />
       </FormField>
       <label className='lab-check'><input type='checkbox' checked={showPassword} onChange={event => setShowPassword(event.target.checked)}/> Show password</label>
-      <Button type='submit' block busy={busy} disabled={!username || !password}>{busy ? 'Signing in…' : 'Sign in'}</Button>
-      <details><summary>Need help signing in?</summary><p>Use your LabGoblin account, which may differ from the login inside a lab VM. Ask your instructor for your username.</p><button type='button' className='ui-button--secondary' onClick={() => setRecovering(true)}>Use an email code</button></details>
+      <Button type='submit' block busy={busy} disabled={!email || !password}>{busy ? 'Signing in…' : 'Sign in'}</Button>
+      <button type='button' className='ui-button--secondary' onClick={() => setRecovering(true)}>Forgot password?</button>
+      <details><summary>Need help signing in?</summary><p>Sign in with the email address on your LabGoblin account. Your lab machine has a separate login. Request an email code to set or reset your password.</p><button type='button' className='ui-button--secondary' onClick={() => setRecovering(true)}>Use an email code</button></details>
       <div className='login-tagline'>Real Skills. Virtual Machines.</div>
     </form>
   </main>

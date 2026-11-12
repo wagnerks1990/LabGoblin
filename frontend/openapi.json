@@ -1287,13 +1287,19 @@
             "type": "string"
           },
           "username": {
-            "title": "Username",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
           }
         },
         "required": [
           "token",
-          "username",
           "email",
           "password"
         ],
@@ -3172,17 +3178,35 @@
       },
       "LoginRequest": {
         "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "format": "email",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
           "password": {
             "title": "Password",
             "type": "string"
           },
           "username": {
-            "title": "Username",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
           }
         },
         "required": [
-          "username",
           "password"
         ],
         "title": "LoginRequest",
@@ -4599,6 +4623,11 @@
       },
       "SetupMember": {
         "properties": {
+          "email": {
+            "default": "",
+            "title": "Email",
+            "type": "string"
+          },
           "is_active": {
             "title": "Is Active",
             "type": "boolean"
@@ -4648,14 +4677,13 @@
             "writeOnly": true
           },
           "username": {
+            "default": "",
             "maxLength": 50,
-            "minLength": 1,
             "title": "Username",
             "type": "string"
           }
         },
         "required": [
-          "username",
           "email",
           "password"
         ],

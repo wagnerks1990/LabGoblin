@@ -104,6 +104,18 @@ def setup_context():
     engine.dispose()
 
 
+def test_new_student_can_use_email_without_a_username(setup_context):
+    db, client, users, headers, template, _ = setup_context
+    body = payload(template, users[3])
+    body["new_students"] = [
+        {"email": "NEW.LEARNER@example.test", "password": "Example-Only-1234!"}
+    ]
+    result = client.post("/api/admin/lab-setups", json=body, headers=headers[0])
+    assert result.status_code == 200, result.text
+    account = db.query(User).filter(User.email == "new.learner@example.test").one()
+    assert account.username.startswith("user-") and account.force_password_change
+
+
 def payload(template, student, **changes):
     return dict(
         request_id=str(uuid4()),

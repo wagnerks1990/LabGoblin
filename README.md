@@ -4,6 +4,9 @@ Optional Resend email supports invitations, single-use password recovery,
 security and lab notices, delivery tracking, and a platform-administrator
 support inbox. See [Email and support](docs/operations/email.md).
 
+Sign in with your account email and password. Account creation no longer needs
+a separate username; existing account handles and sessions remain compatible.
+
 VM cards now show live allocated CPU, memory and disk capacity, usage and uptime, and guest-agent IP/MAC observations. Connection choices explain unavailable RDP/SSH and expose administrator preparation above VNC. See [browser connections](docs/operations/consoles.md).
 
 Guided lab setup now combines class, pool, roster/accounts, assignments, and access scheduling in an editable wizard. Students land on a simplified My labs home with direct browser connections. See [instructor setup](docs/user-guide/instructor-workflow.md).

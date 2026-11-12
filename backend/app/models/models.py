@@ -209,6 +209,13 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(50), unique=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False)
+    __table_args__ = (
+        Index(
+            "uq_users_email_normalized",
+            func.lower(func.rtrim(func.ltrim(email))),
+            unique=True,
+        ),
+    )
     password_hash = Column(String(255), nullable=False)
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
     display_name = Column(String(120), nullable=True)

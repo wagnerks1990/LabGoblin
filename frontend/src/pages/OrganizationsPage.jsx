@@ -90,12 +90,12 @@ export default function OrganizationsPage() {
 
   const updateMemberRole = async member => {
     const role = memberRoles[member.user_id] || member.role
-    if (member.role === 'owner' && role !== 'owner' && !window.confirm(`Change ${member.username || member.user_id} from owner to ${role}? The organization must retain another active owner.`)) return
+    if (member.role === 'owner' && role !== 'owner' && !window.confirm(`Change ${member.email || member.username || member.user_id} from owner to ${role}? The organization must retain another active owner.`)) return
     setRowBusy(member.user_id)
     try {
       await putOrganizationMember(selectedId, member.user_id, { role, is_active: member.is_active })
       await loadMembers(selectedId)
-      setMessage({ type: 'success', text: `Role updated for ${member.username || member.user_id}.` })
+      setMessage({ type: 'success', text: `Role updated for ${member.email || member.username || member.user_id}.` })
     } catch (requestError) {
       setMessage({ type: 'error', text: detail(requestError, 'Role update failed.') })
     } finally {
@@ -104,7 +104,7 @@ export default function OrganizationsPage() {
   }
 
   const toggleMember = async member => {
-    const name = member.username || member.user_id
+    const name = member.email || member.username || member.user_id
     if (member.is_active && !window.confirm(`Deactivate ${name} in this organization? Their organization access will end immediately.`)) return
     setRowBusy(member.user_id)
     try {
@@ -151,7 +151,7 @@ export default function OrganizationsPage() {
       {membersLoading ? <LoadingState label='Loading organization members…' /> : null}
       {membersError ? <ErrorState message={membersError} onRetry={() => loadMembers(selectedId)} retrying={membersLoading} /> : null}
       {!membersLoading && !membersError && !members.length ? <EmptyState title='No members' message='Add an existing platform user below.' /> : null}
-      {!membersLoading && !membersError && members.length ? <div className='ui-table-wrap ui-table-wrap--cards' role='region' aria-labelledby='organization-members-title' tabIndex='0'><table className='ui-table'><thead><tr><th scope='col'>User</th><th scope='col'>Status</th><th scope='col'>Organization role</th><th scope='col'>Actions</th></tr></thead><tbody>{members.map(member => <tr key={member.user_id}><th scope='row'>{member.username || member.user_id}</th><td><WorkflowStatus value={member.is_active ? 'active' : 'disabled'} /></td><td><label className='ui-field'>Role for {member.username || member.user_id}<select className='input' value={memberRoles[member.user_id] || member.role} onChange={event => setMemberRoles(current => ({ ...current, [member.user_id]: event.target.value }))}><option value='student'>Student</option><option value='instructor'>Instructor</option><option value='admin'>Administrator</option><option value='owner'>Owner</option></select></label></td><td><div className='ui-cluster'><button type='button' disabled={rowBusy === member.user_id || (memberRoles[member.user_id] || member.role) === member.role} onClick={() => updateMemberRole(member)}>Save {member.username || member.user_id} role</button><button type='button' className={member.is_active ? 'btn-danger' : 'ui-button--secondary'} disabled={rowBusy === member.user_id} onClick={() => toggleMember(member)}>{member.is_active ? `Deactivate ${member.username || member.user_id}` : `Reactivate ${member.username || member.user_id}`}</button></div></td></tr>)}</tbody></table></div> : null}
+      {!membersLoading && !membersError && members.length ? <div className='ui-table-wrap ui-table-wrap--cards' role='region' aria-labelledby='organization-members-title' tabIndex='0'><table className='ui-table'><thead><tr><th scope='col'>User</th><th scope='col'>Status</th><th scope='col'>Organization role</th><th scope='col'>Actions</th></tr></thead><tbody>{members.map(member => <tr key={member.user_id}><th scope='row'>{member.email || member.username || member.user_id}</th><td><WorkflowStatus value={member.is_active ? 'active' : 'disabled'} /></td><td><label className='ui-field'>Role for {member.email || member.username || member.user_id}<select className='input' value={memberRoles[member.user_id] || member.role} onChange={event => setMemberRoles(current => ({ ...current, [member.user_id]: event.target.value }))}><option value='student'>Student</option><option value='instructor'>Instructor</option><option value='admin'>Administrator</option><option value='owner'>Owner</option></select></label></td><td><div className='ui-cluster'><button type='button' disabled={rowBusy === member.user_id || (memberRoles[member.user_id] || member.role) === member.role} onClick={() => updateMemberRole(member)}>Save {member.email || member.username || member.user_id} role</button><button type='button' className={member.is_active ? 'btn-danger' : 'ui-button--secondary'} disabled={rowBusy === member.user_id} onClick={() => toggleMember(member)}>{member.is_active ? `Deactivate ${member.email || member.username || member.user_id}` : `Reactivate ${member.email || member.username || member.user_id}`}</button></div></td></tr>)}</tbody></table></div> : null}
       <details style={{ marginTop: 16 }}><summary>Add an existing user</summary><form className='ui-form-grid' onSubmit={saveMember} style={{ marginTop: 16 }}><label className='ui-field'>Platform user<select className='input' value={memberForm.user_id} onChange={event => setMemberForm({ ...memberForm, user_id: event.target.value })}><option value=''>Select a user…</option>{users.map(user => <option key={user.id} value={user.id}>{user.username} ({user.email})</option>)}</select></label><label className='ui-field'>Organization role<select className='input' value={memberForm.role} onChange={event => setMemberForm({ ...memberForm, role: event.target.value })}><option value='student'>Student</option><option value='instructor'>Instructor</option><option value='admin'>Administrator</option><option value='owner'>Owner</option></select></label><div className='ui-form-grid__wide'><button disabled={busy || !memberForm.user_id}>{busy ? 'Saving…' : 'Add organization member'}</button></div></form></details>
     </section> : null}
   </section>

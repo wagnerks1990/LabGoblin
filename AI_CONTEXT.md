@@ -49,6 +49,13 @@ CSS pixel viewport without page-level horizontal scrolling.
 
 ## Non-negotiable invariants
 
+- Email is the primary sign-in identifier. Preserve the normalized unique email
+  index and explicit fail-closed collision preflight in migration `20261112_0021`.
+  Legacy handles remain stable JWT subjects and optional compatibility input;
+  email-shaped identifiers must never fall back to a different user's handle.
+  Real email changes revoke sessions and advance `token_version`, invalidating
+  all prior email codes even if the old address is later restored.
+
 - Resend email is disabled by default. See `docs/operations/email.md`.
   Keep credentials and message contents encrypted, the durable outbox and
   provider idempotency window, signed/deduplicated callbacks, positive backend

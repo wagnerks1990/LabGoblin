@@ -10,6 +10,12 @@ from app.models.models import Organization, OrganizationMembership, Role, User
 from app.services.audit_service import record_audit_event
 from app.services.auth_service import issue_session
 from app.services.security import hash_password, validate_password
+from app.services.account_identity import (
+    normalize_email,
+    new_account_handle,
+    ensure_email_available,
+    flush_account,
+)
 
 
 def bootstrap_required(db: Session) -> bool:
@@ -22,7 +28,7 @@ def bootstrap_required(db: Session) -> bool:
 
 
 def create_first_admin(
-    db: Session, *, token: str, username: str, email: str, password: str
+    db: Session, *, token: str, username: str | None, email: str, password: str
 ) -> tuple[User, str]:
     configured = settings.bootstrap_admin_token or ""
     if not configured or not hmac.compare_digest(token, configured):
@@ -38,10 +44,9 @@ def create_first_admin(
         raise HTTPException(
             status_code=409, detail="Administrator enrollment is already complete"
         )
-    username = username.strip()
-    email = email.strip().lower()
-    if not username or not email:
-        raise HTTPException(status_code=422, detail="Username and email are required")
+    username = (username or "").strip() or new_account_handle()
+    email = normalize_email(email)
+    ensure_email_available(db, email)
     if (
         db.query(User)
         .filter((User.username == username) | (User.email == email))
@@ -60,7 +65,7 @@ def create_first_admin(
         force_password_change=False,
     )
     db.add(user)
-    db.flush()
+    flush_account(db)
     organization = db.query(Organization).filter(Organization.slug == "default").first()
     if not organization:
         organization = Organization(

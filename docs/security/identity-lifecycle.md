@@ -5,6 +5,21 @@ authorization is documented separately in [Organization tenancy](organization-te
 
 ## Session model
 
+Email is the primary sign-in identifier. `POST /api/auth/login` accepts
+`email` and `password`; the sign-in page uses this contract. Email lookup ignores
+case and surrounding whitespace. Existing `username` API input remains accepted
+for compatibility, but sending both fields is rejected. Email-shaped input is
+resolved only as an email, never as someone else's account handle. Both aliases
+share one per-account/client login lockout. Unknown identifiers remain hashed in
+audit records and authentication failures do not disclose account existence.
+
+New accounts and first-admin enrollment need no separate username. A stable
+internal handle is generated when absent; existing handles, user IDs, JWT
+subjects and live session checks are preserved. The unique functional email
+index from migration `20261112_0021` prevents case/whitespace duplicate accounts.
+Migration stops on collisions without printing identities, changing passwords,
+merging accounts or deleting records. Resolve collisions before retrying.
+
 Successful login creates an `auth_sessions` row and a signed access token. The
 token contains a random session identifier (`jti`) and the user's current
 `token_version`. A request is accepted only when all of the following remain
@@ -17,7 +32,7 @@ true:
 - a forced password change is not pending for non-identity APIs.
 
 This makes logout and administrative revocation effective immediately. A
-password change, password reset, username change, or account disablement
+password change, password reset, username/email change, or account disablement
 increments `token_version` and revokes every active session for that user.
 Previously issued username-only JWTs are deliberately rejected after this
 migration.
@@ -78,7 +93,7 @@ Identity actions use dotted names such as `identity.login`,
 `identity.password_changed`, and `identity.sessions_revoked`. Each event can
 record an outcome, actor, target, request ID, source IP, message, and JSON
 metadata. Unknown-user login failures have a nullable actor and store only a
-hash of the attempted username. Audit writes share the transaction with the
+hash of the attempted identifier. Audit writes share the transaction with the
 identity state change.
 
 Existing operational audit writers remain readable because new audit fields

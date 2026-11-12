@@ -4,7 +4,7 @@ import Button from '../components/ui/Button'
 import FormField from '../components/ui/FormField'
 
 export default function BootstrapPage({ onComplete, setMessage }) {
-  const [form, setForm] = useState({ token: '', username: '', email: '', password: '' })
+  const [form, setForm] = useState({ token: '', email: '', password: '' })
   const [confirm, setConfirm] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -37,11 +37,8 @@ export default function BootstrapPage({ onComplete, setMessage }) {
       <FormField label='Bootstrap token' id='bootstrap-token' hint='Enter the one-time token printed by the installer. It is not your administrator password.' required>
         <input className='ui-input' type='password' autoComplete='off' value={form.token} onChange={event => setForm({...form, token: event.target.value})} autoFocus />
       </FormField>
-      <FormField label='Admin username' id='bootstrap-username' required>
-        <input className='ui-input' autoComplete='username' value={form.username} onChange={event => setForm({...form, username: event.target.value})} />
-      </FormField>
-      <FormField label='Admin email' id='bootstrap-email' required>
-        <input className='ui-input' type='email' autoComplete='email' value={form.email} onChange={event => setForm({...form, email: event.target.value})} />
+      <FormField label='Administrator email' id='bootstrap-email' hint='Use this email to sign in and recover your password.' required>
+        <input className='ui-input' type='email' autoComplete='username' value={form.email} onChange={event => setForm({...form, email: event.target.value})} />
       </FormField>
       <FormField label='Password' id='bootstrap-password' hint='Use at least 12 characters with upper- and lower-case letters, a number, and a symbol.' required>
         <input className='ui-input' type='password' autoComplete='new-password' value={form.password} onChange={event => setForm({...form, password: event.target.value})} />
@@ -49,7 +46,7 @@ export default function BootstrapPage({ onComplete, setMessage }) {
       <FormField label='Confirm password' id='bootstrap-confirm-password' error={mismatch} required>
         <input className='ui-input' type='password' autoComplete='new-password' value={confirm} onChange={event => setConfirm(event.target.value)} />
       </FormField>
-      <Button type='submit' block busy={busy} disabled={!form.token || !form.username || !form.email || !form.password || !confirm || Boolean(mismatch)}>{busy ? 'Creating administrator…' : 'Create administrator'}</Button>
+      <Button type='submit' block busy={busy} disabled={!form.token || !form.email || !form.password || !confirm || Boolean(mismatch)}>{busy ? 'Creating administrator…' : 'Create administrator'}</Button>
       <div className='login-tagline'>Build. Deploy. Learn. Repeat.</div>
     </form>
   </main>

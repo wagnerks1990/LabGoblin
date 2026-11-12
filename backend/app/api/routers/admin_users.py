@@ -19,6 +19,12 @@ from app.models.models import (
 from app.services.audit_service import record_audit_event
 from app.services.auth_service import revoke_all_sessions
 from app.services.security import hash_password, validate_password
+from app.services.account_identity import (
+    normalize_email,
+    new_account_handle,
+    ensure_email_available,
+    flush_account,
+)
 from app.services.organization_access import (
     OrganizationContext,
     get_current_organization,
@@ -111,9 +117,18 @@ def create_admin_user(
     invitation = payload.get("send_invitation") is True
     if invitation:
         payload = {**payload, "password": secrets.token_urlsafe(32) + "aA1!"}
-    for f in ("username", "email", "password"):
+    for f in ("email", "password"):
         if not payload.get(f):
             raise HTTPException(status_code=422, detail=f"{f} is required")
+    if payload.get("username") is not None and not isinstance(payload["username"], str):
+        raise HTTPException(422, "Account name must be a string")
+    payload = {
+        **payload,
+        "email": normalize_email(payload["email"]),
+        "username": (payload.get("username") or "").strip() or new_account_handle(),
+    }
+    if len(payload["username"]) > 50:
+        raise HTTPException(422, "Account name must fit within 50 characters")
     role_name = payload.get("role")
     role_id = payload.get("role_id")
     if not role_id and role_name:
@@ -125,8 +140,7 @@ def create_admin_user(
     validate_password(payload["password"])
     if db.query(User).filter(User.username == payload["username"]).first():
         raise HTTPException(status_code=409, detail="username already exists")
-    if db.query(User).filter(User.email == payload["email"]).first():
-        raise HTTPException(status_code=409, detail="email already exists")
+    ensure_email_available(db, payload["email"])
     u = User(
         username=payload["username"],
         email=payload["email"],
@@ -138,7 +152,7 @@ def create_admin_user(
         force_password_change=payload.get("force_password_change", True),
     )
     db.add(u)
-    db.flush()
+    flush_account(db)
     if invitation:
         if not u.is_active:
             raise HTTPException(
@@ -184,6 +198,10 @@ def patch_admin_user(
         new_role=selected_role,
     )
     previous_username = u.username
+    previous_email = u.email.strip().lower()
+    if "email" in payload:
+        payload = {**payload, "email": normalize_email(payload["email"])}
+        ensure_email_available(db, payload["email"], exclude_id=u.id)
     was_active = u.is_active
     for k in (
         "username",
@@ -197,8 +215,13 @@ def patch_admin_user(
     if selected_role is not None:
         u.role_id = selected_role.id
         u.role = selected_role.name
-    if previous_username != u.username or (was_active and not u.is_active):
+    if (
+        previous_username != u.username
+        or previous_email != u.email.strip().lower()
+        or (was_active and not u.is_active)
+    ):
         revoke_all_sessions(db, u, reason="account_updated")
+    flush_account(db)
     record_audit_event(
         db,
         actor_id=_user.id,

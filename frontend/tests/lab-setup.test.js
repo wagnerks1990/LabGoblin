@@ -34,3 +34,10 @@ test('submission IDs work without secure-context randomUUID on LAN HTTP', () => 
   assert.match(id,/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
   assert.notEqual(id,submissionId())
 })
+
+test('new students need an email and password without a separate username', () => {
+  const form = {...emptySetup(),new_students:[{email:'student@example.edu',password:'Example-Only-1234!'}]}
+  assert.equal(setupStepError(form,2),'')
+  form.new_students[0].email = ''
+  assert.ok(setupStepError(form,2))
+})

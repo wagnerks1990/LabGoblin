@@ -21,7 +21,7 @@ export default function AccountRecovery({ onBack }) {
       if (hasCode) {
         await api.post('/auth/email/complete', { email, code: code.trim(), new_password: password })
         setCode(''); setPassword(''); setConfirmation(''); setComplete(true)
-        setMessage('Password saved. Previous sessions were revoked. Return to sign in with your username and new password.')
+        setMessage('Password saved. Previous sessions were revoked. Return to sign in with your email and new password.')
       } else {
         const result = await api.post('/auth/email/request', { email })
         setMessage(result.data.message); setHasCode(true)

@@ -75,6 +75,12 @@ must not hide a blocked RDP/SSH reason. A saved profile enables its correspondin
 VM protocol flag, while assignment policy can still deny student access.
 ## Email subsystem
 
+Authentication accepts the primary email field and retains legacy username API
+input. The normalized email index in `20261112_0021` prevents ambiguous accounts
+without rewriting stable handles or JWT subjects; email changes revoke sessions
+and invalidate earlier email codes. All account creation paths normalize and
+validate addresses. See [identity lifecycle](security/identity-lifecycle.md).
+
 `email_service`, `email_identity`, and `email_notifications` implement the
 encrypted outbox/inbox, single-use account recovery, and authorization-checked
 notices. `email_worker` processes bounded persisted claims; signed callbacks

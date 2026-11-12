@@ -16,6 +16,12 @@ from app.api.routers.classroom import (
     _run_for_user,
 )
 from app.db.session import get_db
+from app.services.account_identity import (
+    normalize_email,
+    new_account_handle,
+    ensure_email_available,
+    flush_account,
+)
 from app.models.models import (
     Class,
     DesktopPool,
@@ -125,6 +131,7 @@ def setup_catalog(
             {
                 "user_id": u.id,
                 "username": u.username,
+                "email": u.email,
                 "role": m.role,
                 "is_active": m.is_active,
             }
@@ -227,9 +234,9 @@ def _new_students(db, payload, user, organization):
     if payload.new_students and not role:
         raise HTTPException(409, "The student role is not configured.")
     for item in payload.new_students:
-        username, email = item.username.strip(), item.email.strip()
-        if not username or "@" not in email:
-            raise HTTPException(422, "Each new student needs a username and email.")
+        username = item.username.strip() or new_account_handle()
+        email = normalize_email(item.email)
+        ensure_email_available(db, email)
         password = item.password.get_secret_value()
         validate_password(password)
         if len(password.encode("utf-8")) > 72:
@@ -256,7 +263,7 @@ def _new_students(db, payload, user, organization):
             force_password_change=True,
         )
         db.add(account)
-        db.flush()
+        flush_account(db)
         db.add(
             OrganizationMembership(
                 organization_id=organization.id,

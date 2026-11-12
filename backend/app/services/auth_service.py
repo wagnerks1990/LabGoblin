@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from app.core.config import settings
 from app.models.models import AuthLoginAttempt, AuthSession, User
 from app.services.audit_service import record_audit_event
+from app.services.account_identity import email_column
 from app.services.security import (
     create_access_token,
     hash_password,
@@ -16,19 +17,25 @@ from app.services.security import (
 )
 
 DUMMY_PASSWORD_HASH = "$2b$12$4YhPUD3t8f70JY7V2zNnD.8bhgXqqPp6j8cgqWOmXDVvw8O3krzxS"
+LoginKey = str | tuple[str, int]
 
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-def _attempt_key(username: str, client_ip: str | None) -> str:
-    raw = f"{(client_ip or 'unknown').strip()}|{username.strip().lower()}".encode()
+def _attempt_key(username: LoginKey, client_ip: str | None) -> str:
+    peer = (client_ip or "unknown").strip()
+    raw = (
+        f"labgoblin-account|{peer}|{username[1]}"
+        if isinstance(username, tuple)
+        else f"{peer}|{username.strip().lower()}"
+    ).encode()
     return hashlib.sha256(raw).hexdigest()
 
 
 def _rate_limit_row(
-    db: Session, username: str, client_ip: str | None
+    db: Session, username: LoginKey, client_ip: str | None
 ) -> AuthLoginAttempt | None:
     return (
         db.query(AuthLoginAttempt)
@@ -38,7 +45,9 @@ def _rate_limit_row(
     )
 
 
-def _check_login_allowed(db: Session, username: str, client_ip: str | None) -> None:
+def _check_login_allowed(
+    db: Session, username: LoginKey, client_ip: str | None
+) -> None:
     row = _rate_limit_row(db, username, client_ip)
     now = _utcnow()
     if row and row.blocked_until and row.blocked_until > now:
@@ -50,7 +59,9 @@ def _check_login_allowed(db: Session, username: str, client_ip: str | None) -> N
         )
 
 
-def _record_login_failure(db: Session, username: str, client_ip: str | None) -> None:
+def _record_login_failure(
+    db: Session, username: LoginKey, client_ip: str | None
+) -> None:
     now = _utcnow()
     row = _rate_limit_row(db, username, client_ip)
     window = timedelta(seconds=settings.login_failure_window_seconds)
@@ -69,7 +80,9 @@ def _record_login_failure(db: Session, username: str, client_ip: str | None) -> 
         row.blocked_until = now + timedelta(seconds=settings.login_lockout_seconds)
 
 
-def _clear_login_failures(db: Session, username: str, client_ip: str | None) -> None:
+def _clear_login_failures(
+    db: Session, username: LoginKey, client_ip: str | None
+) -> None:
     row = _rate_limit_row(db, username, client_ip)
     if row:
         db.delete(row)
@@ -108,13 +121,25 @@ def login_user(
     user_agent: str | None = None,
     request_id: str | None = None,
 ) -> str:
-    _check_login_allowed(db, username, client_ip)
-    user = db.query(User).filter(User.username == username).first()
+    identifier = username.strip()
+    # Email-shaped identifiers never fall back to another account's handle.
+    candidates = (
+        db.query(User).filter(email_column() == identifier.lower()).limit(2).all()
+        if "@" in identifier
+        else db.query(User).filter(User.username == identifier).limit(2).all()
+    )
+    user = candidates[0] if len(candidates) == 1 else None
+    login_key = ("account", user.id) if user else identifier.lower()
+    _check_login_allowed(db, login_key, client_ip)
+    if user:
+        # Honor unexpired lockouts written by older username-keyed releases.
+        for alias in {user.username, user.email}:
+            _check_login_allowed(db, alias, client_ip)
     credentials_valid = verify_password(
         password, user.password_hash if user else DUMMY_PASSWORD_HASH
     )
     if not user or not credentials_valid:
-        _record_login_failure(db, username, client_ip)
+        _record_login_failure(db, login_key, client_ip)
         record_audit_event(
             db,
             actor_id=user.id if user else None,
@@ -126,8 +151,8 @@ def login_user(
             request_id=request_id,
             source_ip=client_ip,
             metadata={
-                "username_hash": hashlib.sha256(
-                    username.strip().lower().encode()
+                "identifier_hash": hashlib.sha256(
+                    identifier.lower().encode()
                 ).hexdigest()
             },
         )
@@ -147,7 +172,9 @@ def login_user(
         )
         db.commit()
         raise HTTPException(status_code=403, detail="User account is disabled")
-    _clear_login_failures(db, username, client_ip)
+    _clear_login_failures(db, login_key, client_ip)
+    for alias in {user.username, user.email}:
+        _clear_login_failures(db, alias, client_ip)
     user.last_login_at = _utcnow()
     token = issue_session(db, user, client_ip=client_ip, user_agent=user_agent)
     record_audit_event(
