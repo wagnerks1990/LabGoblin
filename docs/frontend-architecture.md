@@ -171,3 +171,11 @@ method after saving. Only the server's `can_configure` capability exposes the
 platform-admin preparation form. Backend authorization remains authoritative.
 Connected/connecting badges use success/pending states. The canonical setup and
 limits are in [browser connections](operations/consoles.md).
+## Email workflows
+
+Platform administrators use **System â†’ Email & support** for configuration,
+delivery state, and the support inbox. Users choose optional notices under
+Account security. Sign-in help accepts single-use email codes without URL or
+browser-storage secrets. See [Email and support](operations/email.md). The API
+and generated OpenAPI types remain the contract; incoming content is escaped
+text and inaccessible to students and tenant instructors.

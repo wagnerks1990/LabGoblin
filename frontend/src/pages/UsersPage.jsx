@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { EmptyState, ErrorState, LoadingState } from '../components/workflows/WorkflowState'
 import WorkflowStatus from '../components/workflows/WorkflowStatus'
 import { createUser, deleteUser, getUserActivity, listUsers, patchUser, patchUserActivate, patchUserPassword, revokeUserSessions } from '../services/adminUsersApi'
+import api from '../services/api'
 
-const empty = { username: '', email: '', display_name: '', role_id: 1, password: '', is_active: true, force_password_change: true }
+const empty = { username: '', email: '', display_name: '', role_id: 1, password: '', send_invitation: false, is_active: true, force_password_change: true }
 const detail = (error, fallback) => {
   const value = error?.response?.data?.detail
   return typeof value === 'string' ? value : value ? JSON.stringify(value) : fallback
@@ -118,10 +119,11 @@ export default function UsersPage() {
         <label className='ui-field'>Username<input className='input' autoComplete='username' value={form.username} onChange={event => setForm({ ...form, username: event.target.value })} /></label>
         <label className='ui-field'>Email<input className='input' type='email' autoComplete='email' value={form.email} onChange={event => setForm({ ...form, email: event.target.value })} /></label>
         <label className='ui-field'>Display name<input className='input' value={form.display_name} onChange={event => setForm({ ...form, display_name: event.target.value })} /></label>
-        {!editing ? <label className='ui-field'>Initial password<input className='input' type='password' autoComplete='new-password' value={form.password} onChange={event => setForm({ ...form, password: event.target.value })} /></label> : null}
+        {!editing ? <label><input type='checkbox' checked={form.send_invitation} onChange={event => setForm({ ...form, send_invitation: event.target.checked, password: '' })} /> Email a single-use setup code instead of assigning a password</label> : null}
+        {!editing && !form.send_invitation ? <label className='ui-field'>Initial password<input className='input' type='password' autoComplete='new-password' value={form.password} onChange={event => setForm({ ...form, password: event.target.value })} /></label> : null}
         <label className='ui-field'>Platform role<select className='input' value={form.role_id} onChange={event => setForm({ ...form, role_id: Number(event.target.value) })}><option value='1'>Student</option><option value='2'>Teacher</option><option value='3'>Administrator</option></select></label>
         <div className='ui-form-grid__wide ui-cluster'><label><input type='checkbox' checked={form.is_active} onChange={event => setForm({ ...form, is_active: event.target.checked })} /> Active account</label><label><input type='checkbox' checked={form.force_password_change} onChange={event => setForm({ ...form, force_password_change: event.target.checked })} /> Require password change</label></div>
-        <div className='ui-form-grid__wide ui-cluster'><button disabled={busy || !form.username || !form.email || (!editing && !form.password)}>{busy ? 'Saving…' : editing ? 'Save changes' : 'Create user'}</button>{editing ? <button type='button' className='ui-button--secondary' onClick={() => { setEditing(null); setForm(empty) }}>Cancel editing</button> : null}</div>
+        <div className='ui-form-grid__wide ui-cluster'><button disabled={busy || !form.username || !form.email || (!editing && !form.password && !form.send_invitation)}>{busy ? 'Saving…' : editing ? 'Save changes' : form.send_invitation ? 'Create user and queue invitation' : 'Create user'}</button>{editing ? <button type='button' className='ui-button--secondary' onClick={() => { setEditing(null); setForm(empty) }}>Cancel editing</button> : null}</div>
       </form>
     </details>
 
@@ -134,6 +136,7 @@ export default function UsersPage() {
           <button type='button' className='ui-button--secondary' disabled={rowBusy === user.id} onClick={() => { setEditing(user.id); setForm({ ...empty, ...user, password: '', role_id: user.role_id }) }}>Edit {user.username}</button>
           <button type='button' className='ui-button--secondary' disabled={activityBusy === user.id} onClick={() => showActivity(user)}>{activityBusy === user.id ? 'Loading activity…' : `View ${user.username} activity`}</button>
           <details><summary>Security actions</summary><div className='ui-stack' style={{ marginTop: 8 }}>
+            <button type='button' className='ui-button--secondary' disabled={rowBusy === user.id || !user.is_active} onClick={() => { if (!window.confirm(`Email a setup code to ${user.email}? Previous email codes will be invalidated.`)) return; runRowAction(user, async () => { await api.post('/admin/email/invitations', { user_id: user.id }); setMessage({ type: 'success', text: 'Setup email queued. Check Email & support for delivery status.' }) }) }}>Email {user.username} a setup code</button>
             <button type='button' className='ui-button--secondary' onClick={() => { setResetUser(user); setResetPassword(''); setResetConfirmation(''); setResetError('') }}>Reset {user.username} password</button>
             <button type='button' className='ui-button--secondary' disabled={rowBusy === user.id} onClick={() => runRowAction(user, async () => { const result = await revokeUserSessions(user.id); setMessage({ type: 'success', text: `${result.sessions_revoked} session(s) revoked for ${user.username}.` }) })}>Revoke {user.username} sessions</button>
             <button type='button' className='ui-button--secondary' disabled={rowBusy === user.id} onClick={() => runRowAction(user, () => patchUserActivate(user.id, !user.is_active))}>{user.is_active ? `Deactivate ${user.username}` : `Activate ${user.username}`}</button>

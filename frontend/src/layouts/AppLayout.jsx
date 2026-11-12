@@ -78,7 +78,7 @@ export default function AppLayout({ children, setUser, user }) {
   const tenantRole = activeOrganization?.role
   const access = deriveCapabilities(user, tenantRole)
   const accountRoute = loc.pathname.startsWith('/account/security')
-  const organizationBootstrapRoute = access.platformAdmin && loc.pathname.startsWith('/admin/organizations')
+  const organizationBootstrapRoute = access.platformAdmin && (loc.pathname.startsWith('/admin/organizations') || loc.pathname.startsWith('/admin/email'))
   const canRenderWithoutOrganization = accountRoute || organizationBootstrapRoute
   const content = !organizationReady && !accountRoute
     ? <section className='panel' role='status'>Selecting organization…</section>

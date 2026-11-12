@@ -25,6 +25,7 @@ nav:
   - AI: ai/ai-safety.md
   - Operations:
       - Deployment: operations/deployment.md
+      - Email and support: operations/email.md
       - Cloudflare edge: operations/cloudflare.md
       - First run: operations/first-run.md
       - Durable jobs: operations/durable-operations.md
@@ -41,6 +42,8 @@ nav:
       - Codex workflow: codex-cloud-workflow.md
       - GUI validation: gui-section-validation.md
   - V2 Roadmap: roadmap/v2-rebuild.md
+  - Release notes:
+      - Resend email: release-notes/2026-11-email.md
   - Existing documentation:
       - Legacy deployment redirect: deployment.md
       - Backend architecture: backend-architecture.md

@@ -16,6 +16,74 @@ from sqlalchemy.orm import relationship
 from app.db.session import Base
 
 
+class EmailSettings(Base):
+    __tablename__ = "email_settings"
+    id = Column(Integer, primary_key=True)
+    enabled = Column(Boolean, nullable=False, default=False)
+    receiving_enabled = Column(Boolean, nullable=False, default=False)
+    notifications_enabled = Column(Boolean, nullable=False, default=False)
+    public_origin = Column(String(255), nullable=False, default="")
+    sender = Column(String(255), nullable=False, default="")
+    support_address = Column(String(255), nullable=False, default="")
+    encrypted_api_key = Column(Text, nullable=True)
+    encrypted_webhook_secret = Column(Text, nullable=True)
+    notifications_since = Column(DateTime, nullable=True)
+
+
+class EmailMessage(Base):
+    __tablename__ = "email_messages"
+    id = Column(Integer, primary_key=True)
+    direction = Column(String(16), nullable=False)
+    kind = Column(String(32), nullable=False)
+    state = Column(String(32), nullable=False, default="queued", index=True)
+    dedupe_key = Column(String(160), nullable=False, unique=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
+    encrypted_payload = Column(Text, nullable=True)
+    provider_id = Column(String(128), nullable=True, unique=True)
+    attempts = Column(Integer, nullable=False, default=0)
+    run_after = Column(DateTime, nullable=True)
+    lease_expires_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    event_at = Column(DateTime, nullable=True)
+    error = Column(String(120), nullable=True)
+
+
+class EmailActionToken(Base):
+    __tablename__ = "email_action_tokens"
+    token_hash = Column(String(64), primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    email_hash = Column(String(64), nullable=False)
+    token_version = Column(Integer, nullable=False)
+    purpose = Column(String(32), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+
+
+class EmailWebhookEvent(Base):
+    __tablename__ = "email_webhook_events"
+    id = Column(String(255), primary_key=True)
+    event_type = Column(String(64), nullable=False)
+    provider_id = Column(String(128), nullable=False)
+    state = Column(String(16), nullable=False, default="queued", index=True)
+    attempts = Column(Integer, nullable=False, default=0)
+    lease_expires_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    event_at = Column(DateTime, nullable=False)
+
+
+class EmailSuppression(Base):
+    __tablename__ = "email_suppressions"
+    address_hash = Column(String(64), primary_key=True)
+    reason = Column(String(32), nullable=False)
+
+
+class EmailPreference(Base):
+    __tablename__ = "email_preferences"
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    notifications_enabled = Column(Boolean, nullable=False, default=True)
+
+
 class Role(Base):
     __tablename__ = "roles"
     id = Column(Integer, primary_key=True)

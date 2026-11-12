@@ -24,6 +24,13 @@ migration.
 
 ## User workflows
 
+Optional Resend email adds `POST /api/auth/email/request` (generic accepted
+response) and `POST /api/auth/email/complete` (single-use code redemption).
+Successful redemption revokes every existing session and advances the token
+version without automatically signing in. Codes are bound to current email and
+token version, expire after 30 minutes (24 hours for invitations), and never
+appear in links or browser storage. See [email operations](../operations/email.md).
+
 | API | Purpose | Result |
 | --- | --- | --- |
 | `POST /api/auth/login` | Verify local credentials | Creates a revocable session and access token |

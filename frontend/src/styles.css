@@ -344,3 +344,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monos
 .connection-prepare { margin-block: 16px; }
 .connection-prepare input, .connection-prepare textarea, .connection-prepare select { max-width: 100%; }
 .connection-prepare textarea { overflow-wrap: anywhere; }
+/* Mail uses plain text; long untrusted lines must remain inside the viewport. */
+.email-message-list { padding-left: 1.25rem; }
+.email-message-list li { margin-block: 1rem; overflow-wrap: anywhere; }
+.email-message-body { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; font: inherit; }

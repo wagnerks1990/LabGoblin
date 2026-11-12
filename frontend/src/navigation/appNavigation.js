@@ -51,6 +51,7 @@ export const navigationGroups = [
       { id: 'telemetry', label: 'Telemetry', shortLabel: 'System', to: '/telemetry', icon: 'pulse', visible: allUsers },
       { id: 'troubleshooting', label: 'Troubleshooting', shortLabel: 'Issues', to: '/troubleshooting', icon: 'wrench', visible: allUsers },
       { id: 'updates', label: 'System updates', shortLabel: 'Updates', to: '/admin/system-update', icon: 'update', visible: allUsers },
+      { id: 'email', label: 'Email & support', shortLabel: 'Email', to: '/admin/email', icon: 'event', visible: allUsers },
     ],
   },
 ]
