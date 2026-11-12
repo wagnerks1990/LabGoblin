@@ -166,6 +166,14 @@ or Proxmox classroom result is claimed from these local tests.
 Check cards/list, student machine details and connection details at the documented widths. Verify missing agent/configuration states, multiple disks/IPs, RDP setup before VNC, custom port retention, template credential reuse, and automatic method selection after save. Automated checks cover formatting, discovery isolation and connection policy. Live Windows/Linux sessions and browser viewport checks remain deployment validation.
 ### Email and support
 
+The email sign-in follow-up adds five browser width checks for email/password
+submission and the visible Forgot password action, plus email-only first-admin
+setup at 320 and 1440 pixels. Together with the existing email suite, 24
+synthetic browser scenarios passed with no JavaScript errors. Submitted login
+payloads used `email`, and bootstrap submitted no separate username. Backend
+tests separately cover actual sessions, shared alias lockout, email changes,
+duplicate-email denial, and recovery followed by email sign-in.
+
 Synthetic Edge browser checks exercised admin inbox/settings/reply and account
 recovery at 320, 390, 768, 1024, and 1440 CSS pixels. The checks covered long
 untrusted text without horizontal overflow, persistent control names, focus on

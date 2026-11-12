@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
 from app.services.rbac import get_role_name
@@ -66,9 +66,11 @@ def login(
     db: Session = Depends(get_db),
 ):
     client_ip = request.client.host if request.client else None
+    if bool(data.email) == bool(data.username):
+        raise HTTPException(422, "Provide an email address or a legacy username")
     token = login_user(
         db,
-        data.username,
+        str(data.email) if data.email else data.username,
         data.password,
         client_ip=client_ip,
         user_agent=request.headers.get("user-agent"),

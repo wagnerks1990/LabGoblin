@@ -5,7 +5,7 @@ import WorkspaceFinder from './WorkspaceFinder'
 import OrganizationSwitcher from './OrganizationSwitcher'
 
 function userLabel(user) {
-  return user?.display_name || user?.username || user?.email || 'Account'
+  return user?.display_name || user?.email || user?.username || 'Account'
 }
 
 export default function AppHeader({ access, title, user, organizations, organizationId, onOrganizationChange, onMenuOpen, menuOpen, menuButtonRef, onLogout, logoutBusy, logoutError }) {

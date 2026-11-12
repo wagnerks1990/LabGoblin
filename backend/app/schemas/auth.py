@@ -2,13 +2,14 @@ from pydantic import BaseModel, EmailStr
 
 
 class LoginRequest(BaseModel):
-    username: str
+    email: EmailStr | None = None
+    username: str | None = None
     password: str
 
 
 class BootstrapAdminRequest(BaseModel):
     token: str
-    username: str
+    username: str | None = None
     email: EmailStr
     password: str
 

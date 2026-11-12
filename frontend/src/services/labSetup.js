@@ -11,7 +11,7 @@ export function submissionId() {
 export function setupStepError(form, step, now = Date.now()) {
   if (step === 0 && (!form.name.trim() || (!form.class_id && !form.class_name.trim()))) return 'Enter a lab name and choose or name its class.'
   if (step === 1 && !form.pool_id && !form.template_id) return 'Choose a template or an existing pool.'
-  if (step === 2 && form.new_students.some(row => !row.username.trim() || !row.email.includes('@') || !row.password)) return 'Complete the username, email, and password for every new student.'
+  if (step === 2 && form.new_students.some(row => !row.email.includes('@') || !row.password)) return 'Complete the email and password for every new student.'
   if (step === 3) {
     if (!Number.isInteger(Number(form.slots)) || Number(form.slots) < 1 || Number(form.slots) > 10) return 'Choose between 1 and 10 machines per student.'
     if ([form.starts_at, form.ends_at].some(value => value && !Number.isFinite(Date.parse(value)))) return 'Enter valid start and end times.'

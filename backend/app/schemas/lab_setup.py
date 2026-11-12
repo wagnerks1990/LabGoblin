@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, SecretStr, model_validator
 
 
 class SetupStudent(BaseModel):
-    username: str = Field(min_length=1, max_length=50)
+    username: str = Field(default="", max_length=50)
     email: str = Field(min_length=3, max_length=255)
     password: SecretStr = Field(min_length=1, max_length=4096)
     display_name: str = Field(default="", max_length=120)
@@ -90,6 +90,7 @@ class SetupChoice(BaseModel):
 class SetupMember(BaseModel):
     user_id: int
     username: str
+    email: str = ""
     role: str
     is_active: bool
 

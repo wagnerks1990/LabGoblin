@@ -336,6 +336,7 @@ def test_two_organization_http_authorization_matrix(monkeypatch):
                 "id": members.json()[0]["id"],
                 "user_id": platform_admin.id,
                 "username": "platform-admin",
+                "email": platform_admin.email,
                 "role": "owner",
                 "is_active": True,
             }

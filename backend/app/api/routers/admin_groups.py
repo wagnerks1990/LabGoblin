@@ -181,6 +181,7 @@ def list_group_members(
         {
             "user_id": r.user_id,
             "username": users.get(r.user_id).username if users.get(r.user_id) else None,
+            "email": users.get(r.user_id).email if users.get(r.user_id) else None,
             "role_in_group": r.role_in_group,
         }
         for r in rows

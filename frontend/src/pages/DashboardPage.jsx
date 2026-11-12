@@ -115,7 +115,7 @@ function StaffDashboard({ user }) {
 
   return <section>
     <div className='workspace-hero'>
-      <div className='hero-copy'><p className='eyebrow'>Welcome back, {user?.display_name || user?.username || 'learner'}</p><h2>Real Skills.<br/><span>Virtual Machines.</span></h2><p>Your LabGoblin workspace brings machines, learning, and lab activity together.</p><div className='ui-cluster'><Link className='btn' to='/vms'>Open lab machines</Link><Link className='btn ui-button--secondary' to={access.tenantInstructor ? '/classroom' : '/create'}>{access.tenantInstructor ? 'Manage classes & labs' : 'Explore assignments'}</Link></div></div>
+      <div className='hero-copy'><p className='eyebrow'>Welcome back, {user?.display_name || user?.email || 'learner'}</p><h2>Real Skills.<br/><span>Virtual Machines.</span></h2><p>Your LabGoblin workspace brings machines, learning, and lab activity together.</p><div className='ui-cluster'><Link className='btn' to='/vms'>Open lab machines</Link><Link className='btn ui-button--secondary' to={access.tenantInstructor ? '/classroom' : '/create'}>{access.tenantInstructor ? 'Manage classes & labs' : 'Explore assignments'}</Link></div></div>
       <div className='hero-brand' aria-hidden='true'><img src='/brand/labgoblin-icon.svg' alt=''/><span>BUILD. DEPLOY.<br/>LEARN. REPEAT.</span></div>
     </div>
     <div className='workspace-section-title'><h3>Your workspace at a glance</h3><button type='button' className='ui-button--secondary' onClick={loadSummary}>Refresh overview</button></div>

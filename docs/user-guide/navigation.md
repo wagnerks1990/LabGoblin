@@ -26,7 +26,7 @@ failures. An empty view means the request succeeded but returned no records; an
 error view means the request could not be completed.
 ## Email navigation
 
-**System â†’ Email & support** is available only to platform administrators.
-**Account security â†’ Email notifications** controls optional notices for the
-current user. **Need help signing in? â†’ Use an email code** handles account
+**System → Email & support** is available only to platform administrators.
+**Account security → Email notifications** controls optional notices for the
+current user. **Need help signing in? → Use an email code** handles account
 setup and recovery. See [Email and support](../operations/email.md).

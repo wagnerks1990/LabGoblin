@@ -184,6 +184,7 @@ def list_members(
             "id": row.id,
             "user_id": row.user_id,
             "username": users[row.user_id].username if row.user_id in users else None,
+            "email": users[row.user_id].email if row.user_id in users else None,
             "role": row.role,
             "is_active": row.is_active,
         }

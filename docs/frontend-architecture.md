@@ -173,7 +173,12 @@ Connected/connecting badges use success/pending states. The canonical setup and
 limits are in [browser connections](operations/consoles.md).
 ## Email workflows
 
-Platform administrators use **System â†’ Email & support** for configuration,
+The sign-in form uses **Email address**, with a direct **Forgot password?** action.
+Bootstrap, user and classroom account forms need no separate username. Account
+and roster labels prefer the email or display name while retaining IDs for API
+operations. Recovery returns users to email/password sign-in.
+
+Platform administrators use **System → Email & support** for configuration,
 delivery state, and the support inbox. Users choose optional notices under
 Account security. Sign-in help accepts single-use email codes without URL or
 browser-storage secrets. See [Email and support](operations/email.md). The API

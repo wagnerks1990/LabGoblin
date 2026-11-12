@@ -58,6 +58,13 @@ the existing Access/session/origin protections to make webhooks work.
 
 ## Account workflows
 
+Sign in with the email address on the account. First-run setup, account creation,
+and the classroom account form do not require a separate username. Existing
+username-based API clients remain supported, while browser sign-in sends email.
+Migration `20261112_0021` enforces case/whitespace-insensitive unique emails and
+stops safely if existing accounts collide. Email changes revoke sessions and
+invalidate earlier recovery codes, including after an address is changed back.
+
 On **Users**, choose to email an invitation when creating an account, or use
 **Email a setup code** for an existing active account. Invitation creation uses
 a random unknown initial password; no password is returned or emailed. Existing
@@ -129,7 +136,7 @@ separate. Do not include real student messages in screenshots or test fixtures.
 
 ## Verification and rollback
 
-Verify the migration reaches the single head `20261112_0020`; test public
+Verify the migration reaches the single head `20261112_0021`; test public
 readiness, unsigned webhook denial, a queued provider test, a signed callback,
 an incoming support message, and account recovery with a disposable account.
 Synthetic tests do not prove live inbox delivery, DNS, provider restrictions,
