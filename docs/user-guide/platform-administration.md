@@ -33,3 +33,9 @@ state. Treat unavailable data as an error, not an empty healthy result.
 
 Deletion and update actions require their preview or exact confirmation. Retain
 the resulting audit and operation records for the acceptance evidence.
+## Email and support
+
+Use **System → Email & support** to configure Resend, inspect outgoing delivery
+state, and read or manually reply to support mail. Invitations can be queued
+when creating a user or from the user's security actions. No classroom
+membership is granted by an email code. See [Email and support](../operations/email.md).

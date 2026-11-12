@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import secrets
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -107,6 +108,9 @@ def list_admin_users(
 def create_admin_user(
     payload: dict, _user=Depends(require_role("Admin")), db: Session = Depends(get_db)
 ):
+    invitation = payload.get("send_invitation") is True
+    if invitation:
+        payload = {**payload, "password": secrets.token_urlsafe(32) + "aA1!"}
     for f in ("username", "email", "password"):
         if not payload.get(f):
             raise HTTPException(status_code=422, detail=f"{f} is required")
@@ -135,6 +139,14 @@ def create_admin_user(
     )
     db.add(u)
     db.flush()
+    if invitation:
+        if not u.is_active:
+            raise HTTPException(
+                status_code=422, detail="Invitations require an active account"
+            )
+        from app.services.email_identity import issue_code
+
+        issue_code(db, u, purpose="invitation", actor_id=_user.id)
     record_audit_event(
         db,
         actor_id=_user.id,
@@ -225,6 +237,9 @@ def reset_user_password(
         target_id=str(u.id),
         metadata={"sessions_revoked": revoked},
     )
+    from app.services.email_service import security_notice
+
+    security_notice(db, u)
     db.commit()
     return {"ok": True, "message": "Password updated."}
 

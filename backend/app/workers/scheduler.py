@@ -9,6 +9,7 @@ from app.workers.reconciliation_worker import run_once as recon_run_once
 from app.workers.update_worker import run_once as update_run_once
 from app.workers.operation_worker import run_once as operation_run_once
 from app.workers.asset_sync_worker import run_once as asset_sync_run_once
+from app.workers.email_worker import run_once as email_run_once
 
 scheduler: BackgroundScheduler | None = None
 
@@ -20,6 +21,14 @@ def start_scheduler() -> None:
     if scheduler and scheduler.running:
         return
     scheduler = BackgroundScheduler()
+    scheduler.add_job(
+        email_run_once,
+        "interval",
+        seconds=30,
+        id="email",
+        replace_existing=True,
+        max_instances=1,
+    )
     scheduler.add_job(
         operation_run_once,
         "interval",

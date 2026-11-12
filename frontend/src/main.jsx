@@ -29,6 +29,7 @@ import AccountSecurityPage from './pages/AccountSecurityPage'
 import ClassroomPage from './pages/ClassroomPage'
 import BootstrapPage from './pages/BootstrapPage'
 import TemplatesPage from './pages/TemplatesPage'
+import EmailPage from './pages/EmailPage'
 import './styles.css'
 import './workspace.css'
 import api from './services/api'
@@ -87,6 +88,7 @@ function App() {
     <Route path='/admin/users' element={<RequireCapability capability='platformAdmin'><UsersPage /></RequireCapability>} />
     <Route path='/admin/organizations' element={<RequireCapability capability='platformAdmin'><OrganizationsPage /></RequireCapability>} />
     <Route path='/admin/system-update' element={<RequireCapability capability='platformAdmin'><SystemUpdatePage setMessage={setMessage} /></RequireCapability>} />
+    <Route path='/admin/email' element={<RequireCapability capability='platformAdmin'><EmailPage /></RequireCapability>} />
     <Route path='*' element={<Navigate to='/' />} />
   </Routes></AppLayout></BrowserRouter>
 }

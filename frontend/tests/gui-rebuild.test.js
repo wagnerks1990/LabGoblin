@@ -26,7 +26,7 @@ test('navigation model exposes only role-appropriate workflow destinations', () 
     'classroom', 'pools', 'sessions', 'events',
     'proxmox-setup', 'proxmox-inventory', 'templates', 'proxmox-assets',
     'organizations', 'users', 'groups',
-    'telemetry', 'troubleshooting', 'updates',
+    'telemetry', 'troubleshooting', 'updates', 'email',
   ])
 })
 

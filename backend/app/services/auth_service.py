@@ -206,5 +206,8 @@ def change_password(
         target_type="user",
         target_id=str(user.id),
     )
+    from app.services.email_service import security_notice
+
+    security_notice(db, user)
     db.commit()
     return token

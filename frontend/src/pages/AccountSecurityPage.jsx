@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ErrorState, LoadingState } from '../components/workflows/WorkflowState'
 import { changePassword, listSessions, revokeSession } from '../services/authApi'
+import EmailPreferences from '../components/EmailPreferences'
 
 const detail = error => {
   const value = error?.response?.data?.detail
@@ -92,6 +93,7 @@ export default function AccountSecurityPage({ forceChange = false, onChanged, se
       <button disabled={passwordBusy || !currentPassword || !newPassword || !confirmPassword}>{passwordBusy ? 'Changing password…' : 'Change password'}</button>
     </form>
 
+    {!forceChange ? <EmailPreferences /> : null}
     {!forceChange ? <section style={{ marginTop: 16 }}>
       <h3>Signed-in devices</h3>
       {loadingSessions ? <LoadingState label='Loading signed-in devices…' /> : null}

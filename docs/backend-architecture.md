@@ -73,3 +73,11 @@ allocated storage, not guest filesystem free space. Discovery must never write
 Connection options return independent `method_hints`; a successful VNC check
 must not hide a blocked RDP/SSH reason. A saved profile enables its corresponding
 VM protocol flag, while assignment policy can still deny student access.
+## Email subsystem
+
+`email_service`, `email_identity`, and `email_notifications` implement the
+encrypted outbox/inbox, single-use account recovery, and authorization-checked
+notices. `email_worker` processes bounded persisted claims; signed callbacks
+only persist verified, deduplicated receipts. The additive linear migration is
+`20261112_0020`. See [email operations](operations/email.md) for the security,
+retention, provider, and recovery contracts.

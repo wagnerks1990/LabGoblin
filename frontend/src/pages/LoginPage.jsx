@@ -2,12 +2,14 @@ import { useState } from 'react'
 import api from '../services/api'
 import Button from '../components/ui/Button'
 import FormField from '../components/ui/FormField'
+import AccountRecovery from './AccountRecovery'
 
 export default function LoginPage({ onLogin, setMessage }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [recovering, setRecovering] = useState(false)
 
   const submit = async event => {
     event.preventDefault()
@@ -24,6 +26,7 @@ export default function LoginPage({ onLogin, setMessage }) {
     }
   }
 
+  if (recovering) return <main className='auth-shell auth-shell--branded'><AccountRecovery onBack={() => setRecovering(false)} /></main>
   return <main className='auth-shell auth-shell--branded'>
     <section className='auth-story' aria-label='About LabGoblin'><p className='eyebrow'>LabGoblin / Your learning space</p><h2>Real Skills.<br/><span>Virtual Machines.</span></h2><p>A place to build, practice, and explore. Your next hands-on lab starts here.</p><ol className='auth-learning-steps'><li><strong>Sign in</strong><span>Use the account provided by your instructor.</span></li><li><strong>Choose your lab</strong><span>Your assigned resources are waiting in My labs.</span></li><li><strong>Connect and explore</strong><span>Open your desktop or terminal in the browser.</span></li></ol></section>
     <form className='auth-card ui-stack' onSubmit={submit} aria-labelledby='login-title'>
@@ -40,7 +43,7 @@ export default function LoginPage({ onLogin, setMessage }) {
       </FormField>
       <label className='lab-check'><input type='checkbox' checked={showPassword} onChange={event => setShowPassword(event.target.checked)}/> Show password</label>
       <Button type='submit' block busy={busy} disabled={!username || !password}>{busy ? 'Signing in…' : 'Sign in'}</Button>
-      <details><summary>Need help signing in?</summary><p>Use your LabGoblin account, which may differ from the login inside a lab VM. Ask your instructor or administrator for your username or a password reset.</p></details>
+      <details><summary>Need help signing in?</summary><p>Use your LabGoblin account, which may differ from the login inside a lab VM. Ask your instructor for your username.</p><button type='button' className='ui-button--secondary' onClick={() => setRecovering(true)}>Use an email code</button></details>
       <div className='login-tagline'>Real Skills. Virtual Machines.</div>
     </form>
   </main>

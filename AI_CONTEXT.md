@@ -49,6 +49,13 @@ CSS pixel viewport without page-level horizontal scrolling.
 
 ## Non-negotiable invariants
 
+- Resend email is disabled by default. See `docs/operations/email.md`.
+  Keep credentials and message contents encrypted, the durable outbox and
+  provider idempotency window, signed/deduplicated callbacks, positive backend
+  admin authorization, and current recipient/tenant checks. Account email codes
+  are single-use, email/version-bound hashes and never appear in URLs, storage,
+  responses, or audit metadata. Recovery revokes every prior session.
+
 - Resolve organization membership and object ownership on every request.
 - Persist Proxmox mutations as `durable_operations` before calling Proxmox.
 - Store the Proxmox UPID, use idempotency keys, lease jobs, and verify results.

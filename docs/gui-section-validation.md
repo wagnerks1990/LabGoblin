@@ -164,3 +164,14 @@ or Proxmox classroom result is claimed from these local tests.
 ### VM observations follow-up
 
 Check cards/list, student machine details and connection details at the documented widths. Verify missing agent/configuration states, multiple disks/IPs, RDP setup before VNC, custom port retention, template credential reuse, and automatic method selection after save. Automated checks cover formatting, discovery isolation and connection policy. Live Windows/Linux sessions and browser viewport checks remain deployment validation.
+### Email and support
+
+Synthetic Edge browser checks exercised admin inbox/settings/reply and account
+recovery at 320, 390, 768, 1024, and 1440 CSS pixels. The checks covered long
+untrusted text without horizontal overflow, persistent control names, focus on
+message selection, recovery keyboard navigation, and no code in browser storage
+or URLs. Empty, unavailable, and forbidden states were distinct; student,
+instructor, tenant admin and owner views denied the global email page. These
+checks mocked API responses and did not authenticate to a live provider or
+establish real-device acceptance. Backend tests separately enforce real session
+and role checks. See [Email operations](operations/email.md).
